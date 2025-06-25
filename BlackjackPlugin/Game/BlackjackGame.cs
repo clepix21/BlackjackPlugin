@@ -179,12 +179,17 @@ public class BlackjackGame
     {
         return Result switch
         {
-            GameResult.PlayerBlackjack => (int)(CurrentBet * 1.5f),
-            GameResult.PlayerWin or GameResult.DealerBust => CurrentBet,
-            GameResult.Push => 0,
-            GameResult.DealerWin or GameResult.PlayerBust => -CurrentBet,
+            GameResult.PlayerBlackjack => CurrentBet + (int)(CurrentBet * 1.5f), // Mise + bonus 1.5x
+            GameResult.PlayerWin or GameResult.DealerBust => CurrentBet * 2, // Mise + gains égaux à la mise
+            GameResult.Push => CurrentBet, // Récupération de la mise
+            GameResult.DealerWin or GameResult.PlayerBust => 0, // Perte totale
             _ => 0
         };
+    }
+
+    public int GetNetResult()
+    {
+        return GetWinnings() - CurrentBet;
     }
 
     public bool CanDoubleDown()

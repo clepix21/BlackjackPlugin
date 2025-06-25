@@ -216,8 +216,7 @@ public class MainWindow : Window, IDisposable
         }
         else if (ImGui.Button("🎯 Distribuer les cartes") && betAmount <= plugin.Configuration.PlayerMoney)
         {
-            plugin.Configuration.PlayerMoney -= betAmount;
-            plugin.Configuration.Save();
+            // Ne pas déduire l'argent ici, juste commencer la partie
             game.StartNewGame(betAmount);
         }
     }
@@ -243,8 +242,6 @@ public class MainWindow : Window, IDisposable
             ImGui.SameLine();
             if (ImGui.Button("⬆️ Double"))
             {
-                plugin.Configuration.PlayerMoney -= game.CurrentBet;
-                plugin.Configuration.Save();
                 game.DoubleDown();
             }
         }
@@ -271,26 +268,29 @@ public class MainWindow : Window, IDisposable
         
         ImGui.TextColored(color, resultText);
         
-        int winnings = game.GetWinnings();
-        if (winnings > 0)
+        int netResult = game.GetNetResult();
+        
+        if (netResult > 0)
         {
-            ImGui.TextColored(new Vector4(0, 1, 0, 1), $"💰 Gains: +{winnings} Gil");
+            ImGui.TextColored(new Vector4(0, 1, 0, 1), $"💰 Gains nets: +{netResult} Gil");
         }
-        else if (winnings < 0)
+        else if (netResult < 0)
         {
-            ImGui.TextColored(new Vector4(1, 0, 0, 1), $"💸 Pertes: {winnings} Gil");
+            ImGui.TextColored(new Vector4(1, 0, 0, 1), $"💸 Pertes: {netResult} Gil");
         }
         else
         {
-            ImGui.Text("💰 Pas de gains/pertes");
+            ImGui.Text("💰 Égalité - Mise récupérée");
         }
         
         ImGui.Spacing();
         
         if (ImGui.Button("🔄 Nouvelle partie"))
         {
-            plugin.Configuration.PlayerMoney += winnings;
-            plugin.Configuration.Save();
+            // Appliquer le résultat financier de la partie
+            ApplyGameResult();
+            
+            // Réinitialiser le jeu
             game = new BlackjackGame();
             game.OnGameEvent += AddToLog;
             gameLog.Clear();
@@ -314,5 +314,31 @@ public class MainWindow : Window, IDisposable
                 
             ImGui.EndChild();
         }
+    }
+
+    private void ApplyGameResult()
+    {
+        // Déduire la mise au début de la partie
+        plugin.Configuration.PlayerMoney -= game.CurrentBet;
+        
+        // Ajouter les gains totaux
+        int winnings = game.GetWinnings();
+        plugin.Configuration.PlayerMoney += winnings;
+        
+        // S'assurer que l'argent ne devient pas négatif
+        if (plugin.Configuration.PlayerMoney < 0)
+            plugin.Configuration.PlayerMoney = 0;
+        
+        // Calculer le résultat net pour les statistiques
+        int netResult = winnings - game.CurrentBet;
+        
+        // Mettre à jour les statistiques
+        bool won = game.Result == GameResult.PlayerWin || 
+                   game.Result == GameResult.PlayerBlackjack || 
+                   game.Result == GameResult.DealerBust;
+        bool blackjack = game.Result == GameResult.PlayerBlackjack;
+        
+        plugin.Configuration.UpdateStats(won, netResult, blackjack);
+        plugin.Configuration.Save();
     }
 }
