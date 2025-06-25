@@ -248,10 +248,6 @@ public class MainWindow : Window, IDisposable
                 game.DoubleDown();
             }
         }
-        
-        // Informations sur les options
-        ImGui.Spacing();
-        ImGui.TextColored(new Vector4(0.7f, 0.7f, 0.7f, 1.0f), "💡 Conseil: Restez sur 17+, tirez sur 16-");
     }
 
     private void DrawGameOverControls()
