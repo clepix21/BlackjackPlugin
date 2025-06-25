@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 
+#nullable enable
+
 namespace BlackjackPlugin.GameLogic;
 
 public enum GameState
