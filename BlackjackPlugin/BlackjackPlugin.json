@@ -1,8 +1,8 @@
 {
   "Author": "clepix21",
   "Name": "Blackjack Casino",
-  "Punchline": "Jouez au blackjack dans FFXIV !",
-  "Description": "Un plugin pour jouer au blackjack comme dans un vrai casino.\nProfitez d'une expérience de casino authentique directement dans Final Fantasy XIV.",
+  "Punchline": "Play blackjack in FFXIV!",
+  "Description": "A plugin to play blackjack just like in a real casino.\nEnjoy an authentic casino experience directly in Final Fantasy XIV.",
   "InternalName": "BlackjackPlugin",
   "RepoUrl": "https://github.com/clepix21/BlackjackPlugin",
   "ApplicableVersion": "any",
