@@ -11,6 +11,7 @@ public class ConfigWindow : Window, IDisposable
 {
     private Configuration configuration;
     private string[] newSaveNames = new string[3]; // Un nom par slot
+    private Language lastLanguage; // Pour détecter les changements de langue
 
     public ConfigWindow(Plugin plugin) : base(
         Get("config_title", plugin.Configuration.CurrentLanguage))
@@ -18,10 +19,11 @@ public class ConfigWindow : Window, IDisposable
         Flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
                 ImGuiWindowFlags.NoScrollWithMouse;
 
-        Size = new Vector2(450, 425); // Encore plus réduit sans les boutons
+        Size = new Vector2(450, 425);
         SizeCondition = ImGuiCond.Always;
 
         configuration = plugin.Configuration;
+        lastLanguage = configuration.CurrentLanguage;
         
         // Initialiser les noms de sauvegarde
         for (int i = 0; i < newSaveNames.Length; i++)
@@ -36,8 +38,12 @@ public class ConfigWindow : Window, IDisposable
     {
         var lang = configuration.CurrentLanguage;
         
-        // Mise à jour du titre de la fenêtre si la langue a changé
-        WindowName = Get("config_title", lang);
+        // Mettre à jour le titre seulement si la langue a changé ET que la fenêtre n'est pas en cours de déplacement
+        if (lastLanguage != lang && !ImGui.IsWindowFocused())
+        {
+            WindowName = Get("config_title", lang);
+            lastLanguage = lang;
+        }
         
         DrawSaveManagement();
         ImGui.Separator();
@@ -166,6 +172,7 @@ public class ConfigWindow : Window, IDisposable
             configuration.CurrentLanguage = useFrench ? Language.French : Language.English;
             // Sauvegarde automatique quand on change la langue
             configuration.Save();
+            // Ne pas mettre à jour lastLanguage ici pour éviter le changement de titre immédiat
         }
     }
 }
