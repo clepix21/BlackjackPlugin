@@ -18,7 +18,7 @@ public class ConfigWindow : Window, IDisposable
         Flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
                 ImGuiWindowFlags.NoScrollWithMouse;
 
-        Size = new Vector2(450, 450); // Réduit la hauteur car moins d'options
+        Size = new Vector2(450, 425); // Encore plus réduit sans les boutons
         SizeCondition = ImGuiCond.Always;
 
         configuration = plugin.Configuration;
@@ -46,9 +46,6 @@ public class ConfigWindow : Window, IDisposable
         ImGui.Separator();
         
         DrawLanguageSettings();
-        ImGui.Separator();
-        
-        DrawButtons();
     }
 
     private void DrawSaveManagement()
@@ -151,6 +148,8 @@ public class ConfigWindow : Window, IDisposable
         if (ImGui.InputInt(Get("default_bet", lang), ref defaultBet))
         {
             configuration.DefaultBet = Math.Max(10, defaultBet);
+            // Sauvegarde automatique quand on change la valeur
+            configuration.Save();
         }
     }
 
@@ -165,23 +164,8 @@ public class ConfigWindow : Window, IDisposable
         if (ImGui.Checkbox(Get("use_french", lang), ref useFrench))
         {
             configuration.CurrentLanguage = useFrench ? Language.French : Language.English;
-        }
-    }
-
-    private void DrawButtons()
-    {
-        var lang = configuration.CurrentLanguage;
-        
-        if (ImGui.Button(Get("save", lang)))
-        {
+            // Sauvegarde automatique quand on change la langue
             configuration.Save();
-        }
-        
-        ImGui.SameLine();
-        
-        if (ImGui.Button(Get("reset", lang)))
-        {
-            configuration.Reset();
         }
     }
 }
