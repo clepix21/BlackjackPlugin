@@ -27,7 +27,7 @@ public class SaveSlot
     /// Date de la dernière partie jouée.
     /// </summary>
     public DateTime LastPlayed { get; set; } = DateTime.Now;
-
+    
     // Statistiques
 
     /// <summary>
@@ -49,26 +49,26 @@ public class SaveSlot
     /// Nombre de blackjacks réalisés.
     /// </summary>
     public int BlackjacksHit { get; set; } = 0;
-
+    
     /// <summary>
     /// Indique si le slot est vide (pas de nom).
     /// </summary>
     public bool IsEmpty => string.IsNullOrEmpty(Name);
-
+    
     /// <summary>
-    /// Pourcentage de victoires.
+    /// Taux de victoire du joueur (en pourcentage).
     /// </summary>
-    public double WinPercentage => GamesPlayed > 0 ? (double)GamesWon / GamesPlayed * 100 : 0;
-
+    public double WinPercentage => GamesPlayed > 0 ? (double)GamesWon / GamesPlayed * 100.0 : 0.0;
+    
     /// <summary>
     /// Constructeur par défaut.
     /// </summary>
     public SaveSlot() { }
-
+    
     /// <summary>
-    /// Constructeur avec nom du slot.
+    /// Constructeur avec nom du joueur.
     /// </summary>
-    /// <param name="name">Nom du joueur ou du slot.</param>
+    /// <param name="name">Nom du joueur</param>
     public SaveSlot(string name)
     {
         Name = name;
@@ -76,13 +76,13 @@ public class SaveSlot
         CreatedDate = DateTime.Now;
         LastPlayed = DateTime.Now;
     }
-
+    
     /// <summary>
     /// Met à jour les statistiques après une partie.
     /// </summary>
-    /// <param name="won">Indique si la partie a été gagnée.</param>
-    /// <param name="winnings">Gains de la partie.</param>
-    /// <param name="blackjack">Indique si un blackjack a été réalisé.</param>
+    /// <param name="won">Indique si la partie a été gagnée</param>
+    /// <param name="winnings">Gains de la partie</param>
+    /// <param name="blackjack">Indique si un blackjack a été réalisé</param>
     public void UpdateStats(bool won, int winnings, bool blackjack = false)
     {
         GamesPlayed++;
@@ -90,8 +90,11 @@ public class SaveSlot
         TotalWinnings += winnings;
         if (blackjack) BlackjacksHit++;
         LastPlayed = DateTime.Now;
+        
+        // Debug pour vérifier les mises à jour
+        System.Diagnostics.Debug.WriteLine($"[SaveSlot] Stats updated: Games={GamesPlayed}, Won={GamesWon}, WinRate={WinPercentage:F1}%");
     }
-
+    
     /// <summary>
     /// Réinitialise les statistiques et l'argent du joueur.
     /// </summary>
@@ -105,9 +108,9 @@ public class SaveSlot
         CreatedDate = DateTime.Now;
         LastPlayed = DateTime.Now;
     }
-
+    
     /// <summary>
-    /// Vide complètement le slot.
+    /// Vide complètement le slot (nom, stats, argent).
     /// </summary>
     public void Clear()
     {

@@ -2,31 +2,27 @@ using System.Collections.Generic;
 
 namespace BlackjackPlugin.Localization;
 
-// Enumération des langues supportées
 public enum Language
 {
     English,
     French
 }
 
-// Classe statique pour la gestion de la localisation
 public static class Localization
 {
-    // Dictionnaire contenant toutes les traductions
-    // Clé: identifiant de la chaîne, Valeur: dictionnaire langue -> texte traduit
     private static readonly Dictionary<string, Dictionary<Language, string>> Translations = new()
     {
         // Interface principale
-        ["window_title"] = new() { [Language.English] = "🎰 Blackjack Casino", [Language.French] = "🎰 Blackjack Casino" },
-        ["config_title"] = new() { [Language.English] = "⚙️ Blackjack Configuration", [Language.French] = "⚙️ Configuration Blackjack" },
+        ["window_title"] = new() { [Language.English] = "★ Blackjack Casino", [Language.French] = "★ Blackjack Casino" },
+        ["config_title"] = new() { [Language.English] = "♠ Blackjack Configuration", [Language.French] = "♠ Configuration Blackjack" },
         
         // Header
-        ["money"] = new() { [Language.English] = "💰 Money", [Language.French] = "💰 Argent" },
-        ["bet"] = new() { [Language.English] = "🎯 Bet", [Language.French] = "🎯 Mise" },
-        ["current_save"] = new() { [Language.English] = "💾 Save", [Language.French] = "💾 Sauvegarde" },
+        ["money"] = new() { [Language.English] = "¥ Money", [Language.French] = "¥ Argent" },
+        ["bet"] = new() { [Language.English] = "♢ Bet", [Language.French] = "♢ Mise" },
+        ["current_save"] = new() { [Language.English] = "■ Save", [Language.French] = "■ Sauvegarde" },
         
         // Système de sauvegarde
-        ["save_management"] = new() { [Language.English] = "💾 Save Management", [Language.French] = "💾 Gestion des sauvegardes" },
+        ["save_management"] = new() { [Language.English] = "■ Save Management", [Language.French] = "■ Gestion des sauvegardes" },
         ["no_save_selected"] = new() { [Language.English] = "No save selected", [Language.French] = "Aucune sauvegarde sélectionnée" },
         ["select_save"] = new() { [Language.English] = "Please select or create a save to play", [Language.French] = "Veuillez sélectionner ou créer une sauvegarde pour jouer" },
         ["slot"] = new() { [Language.English] = "Slot", [Language.French] = "Emplacement" },
@@ -44,36 +40,36 @@ public static class Localization
         ["blackjacks"] = new() { [Language.English] = "Blackjacks", [Language.French] = "Blackjacks" },
         
         // Zones de jeu
-        ["dealer"] = new() { [Language.English] = "🎩 Dealer:", [Language.French] = "🎩 Croupier:" },
-        ["your_hand"] = new() { [Language.English] = "👤 Your hand:", [Language.French] = "👤 Votre main:" },
+        ["dealer"] = new() { [Language.English] = "♣ Dealer:", [Language.French] = "♣ Croupier:" },
+        ["your_hand"] = new() { [Language.English] = "♤ Your hand:", [Language.French] = "♤ Votre main:" },
         ["total"] = new() { [Language.English] = "Total", [Language.French] = "Total" },
         ["bust"] = new() { [Language.English] = "BUST!", [Language.French] = "BUST!" },
         ["blackjack"] = new() { [Language.English] = "BLACKJACK!", [Language.French] = "BLACKJACK!" },
         
         // Contrôles de mise
-        ["place_bet"] = new() { [Language.English] = "💸 Place your bet:", [Language.French] = "💸 Placez votre mise:" },
-        ["deal_cards"] = new() { [Language.English] = "🎯 Deal cards", [Language.French] = "🎯 Distribuer les cartes" },
+        ["place_bet"] = new() { [Language.English] = "♢ Place your bet:", [Language.French] = "♢ Placez votre mise:" },
+        ["deal_cards"] = new() { [Language.English] = "Deal cards", [Language.French] = "Distribuer les cartes" },
         ["no_money"] = new() { [Language.English] = "You have no money left!", [Language.French] = "Vous n'avez plus d'argent!" },
         ["reset_money"] = new() { [Language.English] = "Reset money", [Language.French] = "Réinitialiser l'argent" },
         
         // Contrôles de jeu
-        ["hit"] = new() { [Language.English] = "🃏 Hit", [Language.French] = "🃏 Tirer une carte" },
-        ["stand"] = new() { [Language.English] = "✋ Stand", [Language.French] = "✋ Rester" },
-        ["double"] = new() { [Language.English] = "⬆️ Double", [Language.French] = "⬆️ Double" },
-        ["dealer_playing"] = new() { [Language.English] = "🎲 Dealer is playing...", [Language.French] = "🎲 Le croupier joue..." },
+        ["hit"] = new() { [Language.English] = "Hit", [Language.French] = "Tirer une carte" },
+        ["stand"] = new() { [Language.English] = "Stand", [Language.French] = "Rester" },
+        ["double"] = new() { [Language.English] = "↑ Double", [Language.French] = "↑ Double" },
+        ["dealer_playing"] = new() { [Language.English] = "♣ Dealer is playing...", [Language.French] = "♣ Le croupier joue..." },
         
         // Résultats
-        ["blackjack_win"] = new() { [Language.English] = "🎉 BLACKJACK! You win!", [Language.French] = "🎉 BLACKJACK! Vous gagnez!" },
-        ["player_win"] = new() { [Language.English] = "🎊 You win!", [Language.French] = "🎊 Vous gagnez!" },
-        ["dealer_win"] = new() { [Language.English] = "😞 Dealer wins", [Language.French] = "😞 Le croupier gagne" },
-        ["push"] = new() { [Language.English] = "🤝 Push!", [Language.French] = "🤝 Égalité!" },
-        ["net_winnings"] = new() { [Language.English] = "💰 Net winnings: +{0} Gil", [Language.French] = "💰 Gains nets: +{0} Gil" },
-        ["losses"] = new() { [Language.English] = "💸 Losses: {0} Gil", [Language.French] = "💸 Pertes: {0} Gil" },
-        ["bet_recovered"] = new() { [Language.English] = "💰 Push - Bet recovered", [Language.French] = "💰 Égalité - Mise récupérée" },
-        ["new_game"] = new() { [Language.English] = "🔄 New game", [Language.French] = "🔄 Nouvelle partie" },
+        ["blackjack_win"] = new() { [Language.English] = "★ BLACKJACK! You win!", [Language.French] = "★ BLACKJACK! Vous gagnez!" },
+        ["player_win"] = new() { [Language.English] = "☆ You win!", [Language.French] = "☆ Vous gagnez!" },
+        ["dealer_win"] = new() { [Language.English] = "Dealer wins", [Language.French] = "Le croupier gagne" },
+        ["push"] = new() { [Language.English] = "⇔ Push!", [Language.French] = "⇔ Égalité!" },
+        ["net_winnings"] = new() { [Language.English] = "¥ Net winnings: +{0} Gil", [Language.French] = "¥ Gains nets: +{0} Gil" },
+        ["losses"] = new() { [Language.English] = "¥ Losses: {0} Gil", [Language.French] = "¥ Pertes: {0} Gil" },
+        ["bet_recovered"] = new() { [Language.English] = "¥ Push - Bet recovered", [Language.French] = "¥ Égalité - Mise récupérée" },
+        ["new_game"] = new() { [Language.English] = "→ New game", [Language.French] = "→ Nouvelle partie" },
         
         // Log de jeu
-        ["game_history"] = new() { [Language.English] = "📜 Game history", [Language.French] = "📜 Historique du jeu" },
+        ["game_history"] = new() { [Language.English] = "■ Game history", [Language.French] = "■ Historique du jeu" },
         
         // Messages de jeu
         ["cards_dealt"] = new() { [Language.English] = "Cards dealt", [Language.French] = "Cartes distribuées" },
@@ -88,15 +84,15 @@ public static class Localization
         ["double_blackjack"] = new() { [Language.English] = "Double blackjack - Push!", [Language.French] = "Double blackjack - Égalité!" },
         
         // Configuration
-        ["money_management"] = new() { [Language.English] = "💰 Money Management", [Language.French] = "💰 Gestion de l'argent" },
+        ["money_management"] = new() { [Language.English] = "¥ Money Management", [Language.French] = "¥ Gestion de l'argent" },
         ["default_bet"] = new() { [Language.English] = "Default bet", [Language.French] = "Mise par défaut" },
-        ["game_options"] = new() { [Language.English] = "🎮 Game Options", [Language.French] = "🎮 Options de jeu" },
+        ["game_options"] = new() { [Language.English] = "◆ Game Options", [Language.French] = "◆ Options de jeu" },
         ["sounds_enabled"] = new() { [Language.English] = "Sounds enabled", [Language.French] = "Sons activés" },
         ["animations_enabled"] = new() { [Language.English] = "Animations enabled", [Language.French] = "Animations activées" },
-        ["language_settings"] = new() { [Language.English] = "🌐 Language Settings", [Language.French] = "🌐 Paramètres de langue" },
+        ["language_settings"] = new() { [Language.English] = "☆ Language Settings", [Language.French] = "☆ Paramètres de langue" },
         ["use_french"] = new() { [Language.English] = "Use French", [Language.French] = "Utiliser le français" },
-        ["save"] = new() { [Language.English] = "💾 Save", [Language.French] = "💾 Sauvegarder" },
-        ["reset"] = new() { [Language.English] = "🔄 Reset", [Language.French] = "🔄 Réinitialiser" },
+        ["save"] = new() { [Language.English] = "■ Save", [Language.French] = "■ Sauvegarder" },
+        ["reset"] = new() { [Language.English] = "→ Reset", [Language.French] = "→ Réinitialiser" },
         
         // Commandes
         ["plugin_loaded"] = new() { [Language.English] = "Blackjack Casino plugin loaded successfully!", [Language.French] = "Plugin Blackjack Casino chargé avec succès!" },
@@ -109,33 +105,19 @@ public static class Localization
         ["cmd_help"] = new() { [Language.English] = "/blackjack help - Shows this help", [Language.French] = "/blackjack help - Affiche cette aide" }
     };
 
-    /// <summary>
-    /// Récupère la chaîne traduite correspondant à la clé et à la langue spécifiée.
-    /// Si la traduction n'existe pas dans la langue demandée, retourne la version anglaise.
-    /// Si la clé n'existe pas, retourne un message d'erreur.
-    /// </summary>
-    /// <param name="key">Clé de la chaîne à traduire</param>
-    /// <param name="language">Langue souhaitée</param>
-    /// <param name="args">Arguments de formatage optionnels</param>
-    /// <returns>Chaîne traduite</returns>
     public static string Get(string key, Language language = Language.English, params object[] args)
     {
-        // Recherche la traduction dans la langue demandée
         if (Translations.TryGetValue(key, out var translations) && 
             translations.TryGetValue(language, out var text))
         {
             return args.Length > 0 ? string.Format(text, args) : text;
         }
-        
-        // Fallback vers l'anglais si la traduction française n'existe pas
         if (language == Language.French && 
             Translations.TryGetValue(key, out var fallbackTranslations) && 
             fallbackTranslations.TryGetValue(Language.English, out var fallbackText))
         {
             return args.Length > 0 ? string.Format(fallbackText, args) : fallbackText;
         }
-        
-        // Retourne un message d'erreur si la clé est inconnue
         return $"[MISSING: {key}]";
     }
 }

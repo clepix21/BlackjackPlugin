@@ -21,7 +21,7 @@ public class ConfigWindow : Window, IDisposable
         Flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
                 ImGuiWindowFlags.NoScrollWithMouse;
 
-        Size = new Vector2(450, 425);
+        Size = new Vector2(450, 400);
         SizeCondition = ImGuiCond.Always;
 
         configuration = plugin.Configuration;
@@ -41,7 +41,7 @@ public class ConfigWindow : Window, IDisposable
     {
         var lang = configuration.CurrentLanguage;
         
-        // Met à jour le titre si la langue a changé et que la fenêtre n'est pas active
+        // Met à jour le titre si la langue a changé et que la fenêtre n'est pas en focus
         if (lastLanguage != lang && !ImGui.IsWindowFocused())
         {
             WindowName = Get("config_title", lang);
@@ -57,7 +57,7 @@ public class ConfigWindow : Window, IDisposable
         DrawLanguageSettings(); // Paramètres de langue
     }
 
-    // Affiche la gestion des sauvegardes (création, chargement, suppression)
+    // Affiche et gère les slots de sauvegarde
     private void DrawSaveManagement()
     {
         var lang = configuration.CurrentLanguage;
@@ -86,7 +86,7 @@ public class ConfigWindow : Window, IDisposable
             
             if (slot.IsEmpty)
             {
-                // Si le slot est vide, propose la création d'une sauvegarde
+                // Slot vide : permet de créer une nouvelle sauvegarde
                 ImGui.TextColored(new Vector4(0.6f, 0.6f, 0.6f, 1.0f), Get("empty", lang));
                 
                 ImGui.SetNextItemWidth(200);
@@ -106,17 +106,32 @@ public class ConfigWindow : Window, IDisposable
             }
             else
             {
-                // Affiche les informations de la sauvegarde existante
+                // Slot existant : affiche les infos et les boutons d'action
                 ImGui.Text($"{slot.Name}");
                 
-                ImGui.Text($"{Get("money", lang)}: {slot.PlayerMoney} Gil | " +
-                          $"{Get("games_played", lang)}: {slot.GamesPlayed} | " +
-                          $"{Get("win_rate", lang)}: {slot.WinPercentage:F1}%");
+                // Affichage des statistiques
+                string statsLine1 = $"{Get("money", lang)}: {slot.PlayerMoney} Gil";
+                string statsLine2 = "";
+                
+                if (slot.GamesPlayed > 0)
+                {
+                    double winRate = (double)slot.GamesWon / slot.GamesPlayed * 100.0;
+                    statsLine2 = $"{Get("games_played", lang)}: {slot.GamesPlayed} | " +
+                                $"{Get("win_rate", lang)}: {winRate:F1}% | " +
+                                $"{Get("blackjacks", lang)}: {slot.BlackjacksHit}";
+                }
+                else
+                {
+                    statsLine2 = $"{Get("games_played", lang)}: 0 | {Get("win_rate", lang)}: 0.0%";
+                }
+                
+                ImGui.Text(statsLine1);
+                ImGui.Text(statsLine2);
                 
                 ImGui.Text($"{Get("created", lang)}: {slot.CreatedDate:dd/MM/yyyy} | " +
                           $"{Get("last_played", lang)}: {slot.LastPlayed:dd/MM/yyyy}");
                 
-                // Boutons d'action pour charger, réinitialiser ou supprimer la sauvegarde
+                // Boutons pour charger, réinitialiser ou supprimer la sauvegarde
                 if (!isCurrentSlot && ImGui.Button(Get("load_save", lang)))
                 {
                     configuration.SelectSave(i);
@@ -149,7 +164,7 @@ public class ConfigWindow : Window, IDisposable
         }
     }
 
-    // Affiche les options de jeu (mise par défaut)
+    // Affiche et gère les options de jeu (ex : mise par défaut)
     private void DrawGameOptions()
     {
         var lang = configuration.CurrentLanguage;
@@ -165,7 +180,7 @@ public class ConfigWindow : Window, IDisposable
         }
     }
 
-    // Affiche les paramètres de langue (français/anglais)
+    // Affiche et gère le choix de la langue
     private void DrawLanguageSettings()
     {
         var lang = configuration.CurrentLanguage;
