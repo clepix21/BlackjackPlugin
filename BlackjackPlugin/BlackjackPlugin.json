@@ -13,7 +13,7 @@
   "LoadSync": false,
   "CanUnloadAsync": true,
   "LoadPriority": 0,
-  "IconUrl": "",
+  "IconUrl": "https://raw.githubusercontent.com/clepix21/BlackjackPlugin/refs/heads/main/BlackjackPlugin/icon.png",
   "Changelog": "Version initiale du plugin Blackjack avec interface moderne et fonctionnalités complètes.",
   "AcceptsFeedback": true
 }
