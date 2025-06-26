@@ -42,32 +42,59 @@ public sealed class Plugin : IDalamudPlugin
         this.commandManager = commandManager;
         this.pluginLog = pluginLog;
 
+        // Charger et initialiser la configuration
         Configuration = pluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
         Configuration.Initialize(pluginInterface);
 
+        // S'assurer que les slots de sauvegarde sont correctement initialisés
+        if (Configuration.SaveSlots == null || Configuration.SaveSlots.Length != 3)
+        {
+            Configuration.SaveSlots = new SaveSystem.SaveSlot[3];
+            for (int i = 0; i < Configuration.SaveSlots.Length; i++)
+            {
+                Configuration.SaveSlots[i] = new SaveSystem.SaveSlot();
+            }
+            Configuration.Save();
+        }
+
+        // Créer les fenêtres
         ConfigWindow = new ConfigWindow(this);
         MainWindow = new MainWindow(this);
         
         WindowSystem.AddWindow(ConfigWindow);
         WindowSystem.AddWindow(MainWindow);
 
-        // Commandes principales
+        // Enregistrer les commandes
         commandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
         {
-            HelpMessage = "Opens the blackjack game. Use '/blackjack help' for more options."
+            HelpMessage = Get("cmd_open_game", Configuration.CurrentLanguage)
         });
         
-        // Alias pour la commande
         commandManager.AddHandler(CommandAlias, new CommandInfo(OnCommand)
         {
             HelpMessage = "Alias for /blackjack"
         });
 
+        // Enregistrer les événements UI
         pluginInterface.UiBuilder.Draw += DrawUI;
         pluginInterface.UiBuilder.OpenConfigUi += ToggleConfigUI;
         pluginInterface.UiBuilder.OpenMainUi += ToggleMainUI;
 
+        // Message de chargement
         pluginLog.Information(Get("plugin_loaded", Configuration.CurrentLanguage));
+        
+        // Si c'est la première utilisation, ouvrir automatiquement la configuration
+        if (Configuration.FirstTimeUser)
+        {
+            Configuration.FirstTimeUser = false;
+            Configuration.Save();
+            
+            // Ouvrir la config après un petit délai pour laisser le temps au plugin de se charger
+            System.Threading.Tasks.Task.Delay(1000).ContinueWith(_ => 
+            {
+                ToggleConfigUI();
+            });
+        }
     }
 
     /// <inheritdoc/>
@@ -107,6 +134,9 @@ public sealed class Plugin : IDalamudPlugin
                 pluginLog.Information(Get("cmd_open_game", lang));
                 pluginLog.Information(Get("cmd_open_config", lang));
                 pluginLog.Information(Get("cmd_help", lang));
+                pluginLog.Information("/blackjack create - Creates a quick save");
+                pluginLog.Information("/blackjack create [name] - Creates a save with custom name");
+                pluginLog.Information("/blackjack reset - Resets current save money to 1000");
                 break;
             case "reset":
                 // Réinitialiser la sauvegarde actuelle si elle existe
@@ -124,12 +154,29 @@ public sealed class Plugin : IDalamudPlugin
                 // Créer une sauvegarde rapide dans le premier slot libre
                 CreateQuickSave();
                 break;
+            case "saves":
+            case "list":
+                // Lister toutes les sauvegardes
+                ListSaves();
+                break;
             default:
                 // Vérifier si c'est une commande de création avec nom
                 if (arguments.StartsWith("create "))
                 {
                     var saveName = args.Substring(7).Trim(); // Enlever "create "
                     CreateQuickSave(saveName);
+                }
+                else if (arguments.StartsWith("load "))
+                {
+                    var slotStr = args.Substring(5).Trim(); // Enlever "load "
+                    if (int.TryParse(slotStr, out int slot) && slot >= 1 && slot <= 3)
+                    {
+                        LoadSave(slot - 1); // Convertir en index 0-based
+                    }
+                    else
+                    {
+                        pluginLog.Warning("Invalid slot number. Use 1, 2, or 3.");
+                    }
                 }
                 else
                 {
@@ -153,12 +200,55 @@ public sealed class Plugin : IDalamudPlugin
                     : customName;
                 
                 Configuration.CreateSave(i, saveName);
-                pluginLog.Information($"Save '{saveName}' created in slot {i + 1}!");
+                pluginLog.Information($"Save '{saveName}' created in slot {i + 1} and loaded!");
                 return;
             }
         }
         
-        pluginLog.Warning("All save slots are full. Please delete a save first.");
+        pluginLog.Warning("All save slots are full. Please delete a save first or use '/blackjack config' to manage saves.");
+    }
+
+    private void LoadSave(int slotIndex)
+    {
+        if (slotIndex >= 0 && slotIndex < Configuration.SaveSlots.Length)
+        {
+            var slot = Configuration.SaveSlots[slotIndex];
+            if (!slot.IsEmpty)
+            {
+                Configuration.SelectSave(slotIndex);
+                pluginLog.Information($"Loaded save '{slot.Name}' from slot {slotIndex + 1}!");
+            }
+            else
+            {
+                pluginLog.Warning($"Slot {slotIndex + 1} is empty. Create a save first.");
+            }
+        }
+        else
+        {
+            pluginLog.Warning("Invalid slot number. Use 1, 2, or 3.");
+        }
+    }
+
+    private void ListSaves()
+    {
+        var lang = Configuration.CurrentLanguage;
+        pluginLog.Information("=== Save Slots ===");
+        
+        for (int i = 0; i < Configuration.SaveSlots.Length; i++)
+        {
+            var slot = Configuration.SaveSlots[i];
+            var isActive = Configuration.CurrentSaveSlot == i;
+            var activeMarker = isActive ? " [ACTIVE]" : "";
+            
+            if (slot.IsEmpty)
+            {
+                pluginLog.Information($"Slot {i + 1}: Empty{activeMarker}");
+            }
+            else
+            {
+                pluginLog.Information($"Slot {i + 1}: {slot.Name} - {slot.PlayerMoney} Gil - {slot.GamesPlayed} games - {slot.WinPercentage:F1}% win rate{activeMarker}");
+            }
+        }
     }
 
     private void DrawUI() => WindowSystem.Draw();
