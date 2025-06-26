@@ -26,9 +26,6 @@ public class Configuration : IPluginConfiguration
     public int MaxBet { get; set; } = 500;
     
     // Options d'interface
-    public bool SoundEnabled { get; set; } = true;
-    public bool ShowAnimations { get; set; } = true;
-    public bool ShowTooltips { get; set; } = true;
     public bool AutoSave { get; set; } = true;
     
     // Paramètres de langue
@@ -170,9 +167,6 @@ public class Configuration : IPluginConfiguration
         DefaultBet = 50;
         MinBet = 10;
         MaxBet = 500;
-        SoundEnabled = true;
-        ShowAnimations = true;
-        ShowTooltips = true;
         AutoSave = true;
         CurrentLanguage = Language.English;
         WindowOpacity = 1.0f;

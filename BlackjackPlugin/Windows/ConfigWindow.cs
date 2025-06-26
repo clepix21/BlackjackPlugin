@@ -18,7 +18,7 @@ public class ConfigWindow : Window, IDisposable
         Flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
                 ImGuiWindowFlags.NoScrollWithMouse;
 
-        Size = new Vector2(450, 500);
+        Size = new Vector2(450, 450); // Réduit la hauteur car moins d'options
         SizeCondition = ImGuiCond.Always;
 
         configuration = plugin.Configuration;
@@ -151,18 +151,6 @@ public class ConfigWindow : Window, IDisposable
         if (ImGui.InputInt(Get("default_bet", lang), ref defaultBet))
         {
             configuration.DefaultBet = Math.Max(10, defaultBet);
-        }
-
-        var soundEnabled = configuration.SoundEnabled;
-        if (ImGui.Checkbox(Get("sounds_enabled", lang), ref soundEnabled))
-        {
-            configuration.SoundEnabled = soundEnabled;
-        }
-
-        var showAnimations = configuration.ShowAnimations;
-        if (ImGui.Checkbox(Get("animations_enabled", lang), ref showAnimations))
-        {
-            configuration.ShowAnimations = showAnimations;
         }
     }
 
