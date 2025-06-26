@@ -10,7 +10,7 @@ namespace BlackjackPlugin.Windows;
 public class ConfigWindow : Window, IDisposable
 {
     private Configuration configuration;
-    private string newSaveName = "";
+    private string[] newSaveNames = new string[3]; // Un nom par slot
 
     public ConfigWindow(Plugin plugin) : base(
         Get("config_title", plugin.Configuration.CurrentLanguage))
@@ -22,6 +22,12 @@ public class ConfigWindow : Window, IDisposable
         SizeCondition = ImGuiCond.Always;
 
         configuration = plugin.Configuration;
+        
+        // Initialiser les noms de sauvegarde
+        for (int i = 0; i < newSaveNames.Length; i++)
+        {
+            newSaveNames[i] = "";
+        }
     }
 
     public void Dispose() { }
@@ -76,13 +82,18 @@ public class ConfigWindow : Window, IDisposable
                 ImGui.TextColored(new Vector4(0.6f, 0.6f, 0.6f, 1.0f), Get("empty", lang));
                 
                 ImGui.SetNextItemWidth(200);
-                ImGui.InputText($"##name_{i}", ref newSaveName, 50);
+                ImGui.InputText($"##name_{i}", ref newSaveNames[i], 50);
                 ImGui.SameLine();
                 
-                if (ImGui.Button(Get("create_save", lang)) && !string.IsNullOrWhiteSpace(newSaveName))
+                if (ImGui.Button(Get("create_save", lang)))
                 {
-                    configuration.CreateSave(i, newSaveName.Trim());
-                    newSaveName = "";
+                    // Si aucun nom n'est fourni, utiliser un nom par défaut
+                    string saveName = string.IsNullOrWhiteSpace(newSaveNames[i]) 
+                        ? $"Slot {i + 1}" 
+                        : newSaveNames[i].Trim();
+                    
+                    configuration.CreateSave(i, saveName);
+                    newSaveNames[i] = ""; // Vider le champ après création
                 }
             }
             else

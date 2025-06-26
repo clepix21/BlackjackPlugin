@@ -120,10 +120,45 @@ public sealed class Plugin : IDalamudPlugin
                     pluginLog.Warning("No save selected. Please create or select a save first.");
                 }
                 break;
+            case "create":
+                // Créer une sauvegarde rapide dans le premier slot libre
+                CreateQuickSave();
+                break;
             default:
-                pluginLog.Warning(Get("unknown_command", lang, arguments));
+                // Vérifier si c'est une commande de création avec nom
+                if (arguments.StartsWith("create "))
+                {
+                    var saveName = args.Substring(7).Trim(); // Enlever "create "
+                    CreateQuickSave(saveName);
+                }
+                else
+                {
+                    pluginLog.Warning(Get("unknown_command", lang, arguments));
+                }
                 break;
         }
+    }
+
+    private void CreateQuickSave(string customName = "")
+    {
+        var lang = Configuration.CurrentLanguage;
+        
+        // Trouver le premier slot libre
+        for (int i = 0; i < Configuration.SaveSlots.Length; i++)
+        {
+            if (Configuration.SaveSlots[i].IsEmpty)
+            {
+                string saveName = string.IsNullOrWhiteSpace(customName) 
+                    ? $"Slot {i + 1}" 
+                    : customName;
+                
+                Configuration.CreateSave(i, saveName);
+                pluginLog.Information($"Save '{saveName}' created in slot {i + 1}!");
+                return;
+            }
+        }
+        
+        pluginLog.Warning("All save slots are full. Please delete a save first.");
     }
 
     private void DrawUI() => WindowSystem.Draw();
