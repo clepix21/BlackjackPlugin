@@ -2,14 +2,18 @@ using System.Collections.Generic;
 
 namespace BlackjackPlugin.Localization;
 
+// Enumération des langues supportées
 public enum Language
 {
     English,
     French
 }
 
+// Classe statique pour la gestion de la localisation
 public static class Localization
 {
+    // Dictionnaire contenant toutes les traductions
+    // Clé: identifiant de la chaîne, Valeur: dictionnaire langue -> texte traduit
     private static readonly Dictionary<string, Dictionary<Language, string>> Translations = new()
     {
         // Interface principale
@@ -105,8 +109,18 @@ public static class Localization
         ["cmd_help"] = new() { [Language.English] = "/blackjack help - Shows this help", [Language.French] = "/blackjack help - Affiche cette aide" }
     };
 
+    /// <summary>
+    /// Récupère la chaîne traduite correspondant à la clé et à la langue spécifiée.
+    /// Si la traduction n'existe pas dans la langue demandée, retourne la version anglaise.
+    /// Si la clé n'existe pas, retourne un message d'erreur.
+    /// </summary>
+    /// <param name="key">Clé de la chaîne à traduire</param>
+    /// <param name="language">Langue souhaitée</param>
+    /// <param name="args">Arguments de formatage optionnels</param>
+    /// <returns>Chaîne traduite</returns>
     public static string Get(string key, Language language = Language.English, params object[] args)
     {
+        // Recherche la traduction dans la langue demandée
         if (Translations.TryGetValue(key, out var translations) && 
             translations.TryGetValue(language, out var text))
         {
@@ -121,6 +135,7 @@ public static class Localization
             return args.Length > 0 ? string.Format(fallbackText, args) : fallbackText;
         }
         
+        // Retourne un message d'erreur si la clé est inconnue
         return $"[MISSING: {key}]";
     }
 }

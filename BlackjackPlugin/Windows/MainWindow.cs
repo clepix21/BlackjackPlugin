@@ -9,14 +9,16 @@ using static BlackjackPlugin.Localization.Localization;
 
 namespace BlackjackPlugin.Windows;
 
+// Fenêtre principale du plugin Blackjack
 public class MainWindow : Window, IDisposable
 {
-    private Plugin plugin;
-    private BlackjackGame game;
-    private int betAmount = 50;
-    private List<string> gameLog;
-    private const int MaxLogEntries = 10;
+    private Plugin plugin; // Référence au plugin principal
+    private BlackjackGame game; // Instance du jeu de blackjack
+    private int betAmount = 50; // Montant de la mise actuelle
+    private List<string> gameLog; // Historique des événements du jeu
+    private const int MaxLogEntries = 10; // Nombre maximum d'entrées dans le log
 
+    // Constructeur de la fenêtre principale
     public MainWindow(Plugin plugin) : base(
         Get("window_title", plugin.Configuration.CurrentLanguage))
     {
@@ -31,18 +33,20 @@ public class MainWindow : Window, IDisposable
         this.betAmount = plugin.Configuration.DefaultBet;
         this.gameLog = new List<string>();
 
-        // S'abonner aux événements du jeu
+        // S'abonner aux événements du jeu pour le log
         game.OnGameEvent += AddToLog;
         
-        // Synchroniser la langue du jeu
+        // Synchroniser la langue du jeu avec la configuration
         game.GameLanguage = plugin.Configuration.CurrentLanguage;
     }
 
+    // Désabonnement lors de la destruction de la fenêtre
     public void Dispose()
     {
         game.OnGameEvent -= AddToLog;
     }
 
+    // Ajoute un message à l'historique du jeu
     private void AddToLog(string message)
     {
         gameLog.Add($"[{DateTime.Now:HH:mm:ss}] {message}");
@@ -52,6 +56,7 @@ public class MainWindow : Window, IDisposable
         }
     }
 
+    // Méthode principale d'affichage de la fenêtre
     public override void Draw()
     {
         var lang = plugin.Configuration.CurrentLanguage;
@@ -79,6 +84,7 @@ public class MainWindow : Window, IDisposable
         DrawGameLog();
     }
 
+    // Affiche un message si aucune sauvegarde n'est sélectionnée
     private void DrawNoSaveSelected()
     {
         var lang = plugin.Configuration.CurrentLanguage;
@@ -97,12 +103,13 @@ public class MainWindow : Window, IDisposable
         }
     }
 
+    // Affiche l'en-tête avec l'argent du joueur et la sauvegarde courante
     private void DrawHeader()
     {
         var lang = plugin.Configuration.CurrentLanguage;
         var currentSave = plugin.Configuration.CurrentSave!;
         
-        // Style du header
+        // Style du header (texte doré)
         ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(1.0f, 0.84f, 0.0f, 1.0f)); // Or
         ImGui.Text($"{Get("money", lang)}: {currentSave.PlayerMoney} Gil");
         ImGui.PopStyleColor();
@@ -117,6 +124,7 @@ public class MainWindow : Window, IDisposable
         }
     }
 
+    // Affiche la zone de jeu (main du croupier et du joueur)
     private void DrawGameArea()
     {
         var lang = plugin.Configuration.CurrentLanguage;
@@ -175,6 +183,7 @@ public class MainWindow : Window, IDisposable
         ImGui.Unindent();
     }
 
+    // Affiche une main de cartes (joueur ou croupier)
     private void DrawHand(List<Card> hand, bool hideSecondCard)
     {
         if (hand.Count == 0) return;
@@ -185,7 +194,7 @@ public class MainWindow : Window, IDisposable
             
             if (i == 1 && hideSecondCard)
             {
-                // Carte cachée
+                // Carte cachée (face down)
                 ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.3f, 0.3f, 0.3f, 1.0f));
                 ImGui.PushStyleColor(ImGuiCol.ButtonHovered, new Vector4(0.4f, 0.4f, 0.4f, 1.0f));
                 ImGui.Button("🂠");
@@ -193,7 +202,7 @@ public class MainWindow : Window, IDisposable
             }
             else
             {
-                // Carte visible avec couleur
+                // Carte visible avec couleur selon la couleur de la carte
                 var card = hand[i];
                 var color = card.Suit == Suit.Hearts || card.Suit == Suit.Diamonds 
                     ? new Vector4(0.8f, 0.2f, 0.2f, 1.0f) 
@@ -207,6 +216,7 @@ public class MainWindow : Window, IDisposable
         }
     }
 
+    // Affiche les contrôles selon l'état du jeu
     private void DrawControls()
     {
         switch (game.State)
@@ -230,6 +240,7 @@ public class MainWindow : Window, IDisposable
         }
     }
 
+    // Contrôles pour placer une mise
     private void DrawBettingControls()
     {
         var lang = plugin.Configuration.CurrentLanguage;
@@ -256,6 +267,7 @@ public class MainWindow : Window, IDisposable
         
         if (currentSave.PlayerMoney <= 0)
         {
+            // Message si le joueur n'a plus d'argent
             ImGui.TextColored(new Vector4(1, 0, 0, 1), Get("no_money", lang));
             if (ImGui.Button(Get("reset_money", lang)))
             {
@@ -264,16 +276,18 @@ public class MainWindow : Window, IDisposable
         }
         else if (ImGui.Button(Get("deal_cards", lang)) && betAmount <= currentSave.PlayerMoney)
         {
+            // Démarrer une nouvelle partie
             game.StartNewGame(betAmount);
         }
     }
 
+    // Contrôles pendant le tour du joueur
     private void DrawPlayerTurnControls()
     {
         var lang = plugin.Configuration.CurrentLanguage;
         var currentSave = plugin.Configuration.CurrentSave!;
         
-        // Boutons principaux
+        // Bouton "Tirer une carte"
         if (ImGui.Button(Get("hit", lang)))
         {
             game.Hit();
@@ -281,6 +295,7 @@ public class MainWindow : Window, IDisposable
         
         ImGui.SameLine();
         
+        // Bouton "Rester"
         if (ImGui.Button(Get("stand", lang)))
         {
             game.Stand();
@@ -297,10 +312,12 @@ public class MainWindow : Window, IDisposable
         }
     }
 
+    // Contrôles et affichage après la fin de la partie
     private void DrawGameOverControls()
     {
         var lang = plugin.Configuration.CurrentLanguage;
         
+        // Texte du résultat de la partie
         string resultText = game.Result switch
         {
             GameResult.PlayerBlackjack => Get("blackjack_win", lang),
@@ -310,6 +327,7 @@ public class MainWindow : Window, IDisposable
             _ => ""
         };
         
+        // Couleur selon le résultat
         Vector4 color = game.Result switch
         {
             GameResult.PlayerBlackjack or GameResult.PlayerWin or GameResult.DealerBust => new Vector4(0, 1, 0, 1),
@@ -322,6 +340,7 @@ public class MainWindow : Window, IDisposable
         
         int netResult = game.GetNetResult();
         
+        // Affichage du gain ou de la perte nette
         if (netResult > 0)
         {
             ImGui.TextColored(new Vector4(0, 1, 0, 1), Get("net_winnings", lang, netResult));
@@ -337,6 +356,7 @@ public class MainWindow : Window, IDisposable
         
         ImGui.Spacing();
         
+        // Bouton pour démarrer une nouvelle partie
         if (ImGui.Button(Get("new_game", lang)))
         {
             // Appliquer le résultat financier de la partie
@@ -350,6 +370,7 @@ public class MainWindow : Window, IDisposable
         }
     }
 
+    // Affiche l'historique des événements du jeu
     private void DrawGameLog()
     {
         var lang = plugin.Configuration.CurrentLanguage;
@@ -363,7 +384,7 @@ public class MainWindow : Window, IDisposable
                 ImGui.TextWrapped(entry);
             }
             
-            // Auto-scroll vers le bas
+            // Auto-scroll vers le bas si déjà en bas
             if (ImGui.GetScrollY() >= ImGui.GetScrollMaxY())
                 ImGui.SetScrollHereY(1.0f);
                 
@@ -371,6 +392,7 @@ public class MainWindow : Window, IDisposable
         }
     }
 
+    // Applique le résultat de la partie sur la sauvegarde (argent, stats)
     private void ApplyGameResult()
     {
         var currentSave = plugin.Configuration.CurrentSave!;

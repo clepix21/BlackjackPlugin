@@ -5,17 +5,28 @@ using System.Collections.Generic;
 
 namespace BlackjackPlugin.GameLogic;
 
+/// <summary>
+/// Représente un paquet de cartes pour le jeu de Blackjack.
+/// </summary>
 public class Deck
 {
+    // Liste des cartes dans le paquet
     private List<Card> cards = new();
+    // Générateur de nombres aléatoires pour le mélange
     private Random random = new();
 
+    /// <summary>
+    /// Initialise un nouveau paquet mélangé.
+    /// </summary>
     public Deck()
     {
         InitializeDeck();
         Shuffle();
     }
 
+    /// <summary>
+    /// Remplit le paquet avec toutes les combinaisons de couleurs et valeurs.
+    /// </summary>
     private void InitializeDeck()
     {
         cards.Clear();
@@ -29,6 +40,9 @@ public class Deck
         }
     }
 
+    /// <summary>
+    /// Mélange les cartes du paquet.
+    /// </summary>
     public void Shuffle()
     {
         for (int i = cards.Count - 1; i > 0; i--)
@@ -38,6 +52,10 @@ public class Deck
         }
     }
 
+    /// <summary>
+    /// Pioche la première carte du paquet. Si le paquet est vide, il est réinitialisé et mélangé.
+    /// </summary>
+    /// <returns>La carte piochée.</returns>
     public Card DrawCard()
     {
         if (cards.Count == 0)
@@ -51,5 +69,8 @@ public class Deck
         return card;
     }
 
+    /// <summary>
+    /// Nombre de cartes restantes dans le paquet.
+    /// </summary>
     public int CardsRemaining => cards.Count;
 }

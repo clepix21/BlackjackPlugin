@@ -16,37 +16,41 @@ public class Configuration : IPluginConfiguration
     /// <inheritdoc/>
     public int Version { get; set; } = 1;
 
-    // Système de sauvegarde
+    // Système de sauvegarde : 3 emplacements de sauvegarde, index du slot courant
     public SaveSlot[] SaveSlots { get; set; } = new SaveSlot[3];
     public int CurrentSaveSlot { get; set; } = -1; // -1 = aucun slot sélectionné
     
-    // Paramètres de jeu
+    // Paramètres de jeu : mises par défaut, min et max
     public int DefaultBet { get; set; } = 50;
     public int MinBet { get; set; } = 10;
     public int MaxBet { get; set; } = 500;
     
-    // Options d'interface
+    // Options d'interface : autosave
     public bool AutoSave { get; set; } = true;
     
     // Paramètres de langue
     public Language CurrentLanguage { get; set; } = Language.English;
     
-    // Paramètres visuels
+    // Paramètres visuels : opacité, thème
     public float WindowOpacity { get; set; } = 1.0f;
     public bool UseCustomTheme { get; set; } = false;
     public string ThemeName { get; set; } = "Default";
     
-    // Paramètres avancés
+    // Paramètres avancés : probabilités, raccourcis, historique
     public bool ShowProbabilities { get; set; } = false;
     public bool EnableHotkeys { get; set; } = true;
     public bool LogGameHistory { get; set; } = false;
     
-    // Paramètres de sécurité
+    // Paramètres de sécurité : première utilisation
     public bool FirstTimeUser { get; set; } = true;
 
+    // Interface Dalamud (non sérialisée)
     [JsonIgnore]
     private IDalamudPluginInterface? pluginInterface;
 
+    /// <summary>
+    /// Constructeur : initialise les slots de sauvegarde
+    /// </summary>
     public Configuration()
     {
         // Initialiser les emplacements de sauvegarde
@@ -87,7 +91,7 @@ public class Configuration : IPluginConfiguration
     }
 
     /// <summary>
-    /// Sauvegarde la configuration
+    /// Sauvegarde la configuration sur le disque
     /// </summary>
     public void Save()
     {
@@ -97,6 +101,8 @@ public class Configuration : IPluginConfiguration
     /// <summary>
     /// Crée une nouvelle sauvegarde dans l'emplacement spécifié
     /// </summary>
+    /// <param name="slotIndex">Index du slot</param>
+    /// <param name="name">Nom de la sauvegarde</param>
     public void CreateSave(int slotIndex, string name)
     {
         if (slotIndex >= 0 && slotIndex < SaveSlots.Length)
@@ -110,6 +116,7 @@ public class Configuration : IPluginConfiguration
     /// <summary>
     /// Supprime la sauvegarde dans l'emplacement spécifié
     /// </summary>
+    /// <param name="slotIndex">Index du slot</param>
     public void DeleteSave(int slotIndex)
     {
         if (slotIndex >= 0 && slotIndex < SaveSlots.Length)
@@ -124,8 +131,9 @@ public class Configuration : IPluginConfiguration
     }
     
     /// <summary>
-    /// Sélectionne une sauvegarde
+    /// Sélectionne une sauvegarde existante
     /// </summary>
+    /// <param name="slotIndex">Index du slot</param>
     public void SelectSave(int slotIndex)
     {
         if (slotIndex >= 0 && slotIndex < SaveSlots.Length && !SaveSlots[slotIndex].IsEmpty)
@@ -138,6 +146,7 @@ public class Configuration : IPluginConfiguration
     /// <summary>
     /// Met à jour l'argent du joueur actuel
     /// </summary>
+    /// <param name="newAmount">Nouveau montant</param>
     public void UpdatePlayerMoney(int newAmount)
     {
         if (CurrentSave != null)
@@ -150,6 +159,9 @@ public class Configuration : IPluginConfiguration
     /// <summary>
     /// Met à jour les statistiques de la sauvegarde actuelle
     /// </summary>
+    /// <param name="won">Victoire ?</param>
+    /// <param name="winnings">Gains</param>
+    /// <param name="blackjack">Blackjack ?</param>
     public void UpdateStats(bool won, int winnings, bool blackjack = false)
     {
         if (CurrentSave != null)
@@ -160,7 +172,7 @@ public class Configuration : IPluginConfiguration
     }
 
     /// <summary>
-    /// Remet la configuration aux valeurs par défaut (sans toucher aux sauvegardes)
+    /// Remet la configuration aux valeurs par défaut (hors sauvegardes)
     /// </summary>
     public void Reset()
     {

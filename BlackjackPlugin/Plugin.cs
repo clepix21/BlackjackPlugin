@@ -57,14 +57,14 @@ public sealed class Plugin : IDalamudPlugin
             Configuration.Save();
         }
 
-        // Créer les fenêtres
+        // Créer les fenêtres de configuration et principale
         ConfigWindow = new ConfigWindow(this);
         MainWindow = new MainWindow(this);
         
         WindowSystem.AddWindow(ConfigWindow);
         WindowSystem.AddWindow(MainWindow);
 
-        // Enregistrer les commandes
+        // Enregistrer les commandes du plugin
         commandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
         {
             HelpMessage = Get("cmd_open_game", Configuration.CurrentLanguage)
@@ -80,7 +80,7 @@ public sealed class Plugin : IDalamudPlugin
         pluginInterface.UiBuilder.OpenConfigUi += ToggleConfigUI;
         pluginInterface.UiBuilder.OpenMainUi += ToggleMainUI;
 
-        // Message de chargement
+        // Message de chargement dans le log
         pluginLog.Information(Get("plugin_loaded", Configuration.CurrentLanguage));
         
         // Si c'est la première utilisation, ouvrir automatiquement la configuration
@@ -100,21 +100,28 @@ public sealed class Plugin : IDalamudPlugin
     /// <inheritdoc/>
     public void Dispose()
     {
+        // Nettoyer toutes les fenêtres
         WindowSystem.RemoveAllWindows();
         
         ConfigWindow.Dispose();
         MainWindow.Dispose();
         
+        // Retirer les handlers de commande
         commandManager.RemoveHandler(CommandName);
         commandManager.RemoveHandler(CommandAlias);
         
+        // Désabonner les événements UI
         pluginInterface.UiBuilder.Draw -= DrawUI;
         pluginInterface.UiBuilder.OpenConfigUi -= ToggleConfigUI;
         pluginInterface.UiBuilder.OpenMainUi -= ToggleMainUI;
 
+        // Message de déchargement dans le log
         pluginLog.Information(Get("plugin_unloaded", Configuration.CurrentLanguage));
     }
 
+    /// <summary>
+    /// Handler principal pour les commandes du plugin
+    /// </summary>
     private void OnCommand(string command, string args)
     {
         var arguments = args.Trim().ToLowerInvariant();
@@ -123,13 +130,16 @@ public sealed class Plugin : IDalamudPlugin
         switch (arguments)
         {
             case "":
+                // Ouvre la fenêtre principale du jeu
                 ToggleMainUI();
                 break;
             case "config":
             case "settings":
+                // Ouvre la fenêtre de configuration
                 ToggleConfigUI();
                 break;
             case "help":
+                // Affiche l'aide des commandes
                 pluginLog.Information(Get("available_commands", lang));
                 pluginLog.Information(Get("cmd_open_game", lang));
                 pluginLog.Information(Get("cmd_open_config", lang));
@@ -186,6 +196,9 @@ public sealed class Plugin : IDalamudPlugin
         }
     }
 
+    /// <summary>
+    /// Crée une sauvegarde rapide dans le premier slot libre, ou avec un nom personnalisé
+    /// </summary>
     private void CreateQuickSave(string customName = "")
     {
         var lang = Configuration.CurrentLanguage;
@@ -208,6 +221,9 @@ public sealed class Plugin : IDalamudPlugin
         pluginLog.Warning("All save slots are full. Please delete a save first or use '/blackjack config' to manage saves.");
     }
 
+    /// <summary>
+    /// Charge une sauvegarde à partir de l'index de slot donné
+    /// </summary>
     private void LoadSave(int slotIndex)
     {
         if (slotIndex >= 0 && slotIndex < Configuration.SaveSlots.Length)
@@ -229,6 +245,9 @@ public sealed class Plugin : IDalamudPlugin
         }
     }
 
+    /// <summary>
+    /// Liste toutes les sauvegardes existantes dans le log
+    /// </summary>
     private void ListSaves()
     {
         var lang = Configuration.CurrentLanguage;
@@ -251,8 +270,18 @@ public sealed class Plugin : IDalamudPlugin
         }
     }
 
+    /// <summary>
+    /// Dessine l'UI du plugin
+    /// </summary>
     private void DrawUI() => WindowSystem.Draw();
 
+    /// <summary>
+    /// Ouvre ou ferme la fenêtre de configuration
+    /// </summary>
     public void ToggleConfigUI() => ConfigWindow.Toggle();
+
+    /// <summary>
+    /// Ouvre ou ferme la fenêtre principale du jeu
+    /// </summary>
     public void ToggleMainUI() => MainWindow.Toggle();
 }

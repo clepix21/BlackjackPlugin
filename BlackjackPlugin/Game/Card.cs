@@ -1,51 +1,59 @@
 namespace BlackjackPlugin.GameLogic;
 
+// Enumération pour les couleurs (suits) des cartes
 public enum Suit
 {
-    Hearts,
-    Diamonds,
-    Clubs,
-    Spades
+    Hearts,    // Cœurs
+    Diamonds,  // Carreaux
+    Clubs,     // Trèfles
+    Spades     // Piques
 }
 
+// Enumération pour les valeurs (rangs) des cartes
 public enum Rank
 {
-    Ace = 1,
-    Two = 2,
-    Three = 3,
-    Four = 4,
-    Five = 5,
-    Six = 6,
-    Seven = 7,
-    Eight = 8,
-    Nine = 9,
-    Ten = 10,
-    Jack = 11,
-    Queen = 12,
-    King = 13
+    Ace = 1,    // As
+    Two = 2,    // Deux
+    Three = 3,  // Trois
+    Four = 4,   // Quatre
+    Five = 5,   // Cinq
+    Six = 6,    // Six
+    Seven = 7,  // Sept
+    Eight = 8,  // Huit
+    Nine = 9,   // Neuf
+    Ten = 10,   // Dix
+    Jack = 11,  // Valet
+    Queen = 12, // Dame
+    King = 13   // Roi
 }
 
+// Classe représentant une carte à jouer
 public class Card
 {
+    // Propriété pour la couleur de la carte
     public Suit Suit { get; }
+    // Propriété pour la valeur de la carte
     public Rank Rank { get; }
 
+    // Constructeur de la carte
     public Card(Suit suit, Rank rank)
     {
         Suit = suit;
         Rank = rank;
     }
 
+    // Retourne la valeur de la carte pour le Blackjack
     public int GetBlackjackValue()
     {
         return Rank switch
         {
-            Rank.Ace => 11, // Sera ajusté si nécessaire
-            Rank.Jack or Rank.Queen or Rank.King => 10,
-            _ => (int)Rank
+            Rank.Ace => 11, // L'as vaut 11 (sera ajusté si nécessaire)
+            Rank.Jack or Rank.Queen or Rank.King => 10, // Figures valent 10
+            _ => (int)Rank // Les autres gardent leur valeur numérique
         };
     }
 
+    // Retourne le nom affiché de la carte (ex: "A♥", "10♠")
     public string GetDisplayName()
     {
         var suitSymbol = Suit switch
@@ -69,6 +77,7 @@ public class Card
         return $"{rankName}{suitSymbol}";
     }
 
+    // Retourne la couleur de la carte sous forme de code couleur (uint)
     public uint GetCardColor()
     {
         return Suit switch

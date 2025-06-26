@@ -7,38 +7,42 @@ using static BlackjackPlugin.Localization.Localization;
 
 namespace BlackjackPlugin.GameLogic;
 
+// États possibles du jeu de blackjack
 public enum GameState
 {
-    WaitingForBet,
-    PlayerTurn,
-    DealerTurn,
-    GameOver
+    WaitingForBet,   // En attente de la mise du joueur
+    PlayerTurn,      // Tour du joueur
+    DealerTurn,      // Tour du croupier
+    GameOver         // Fin de la partie
 }
 
+// Résultats possibles d'une partie
 public enum GameResult
 {
-    None,
-    PlayerWin,
-    DealerWin,
-    Push,
-    PlayerBlackjack,
-    PlayerBust,
-    DealerBust
+    None,             // Aucun résultat (partie en cours)
+    PlayerWin,        // Joueur gagne
+    DealerWin,        // Croupier gagne
+    Push,             // Égalité
+    PlayerBlackjack,  // Blackjack du joueur
+    PlayerBust,       // Joueur dépasse 21
+    DealerBust        // Croupier dépasse 21
 }
 
+// Classe principale gérant une partie de blackjack
 public class BlackjackGame
 {
-    private Deck deck;
-    public List<Card> PlayerHand { get; private set; }
-    public List<Card> DealerHand { get; private set; }
-    public GameState State { get; private set; }
-    public GameResult Result { get; private set; }
-    public int CurrentBet { get; private set; }
-    public bool DealerHoleCardRevealed { get; private set; }
-    public Language GameLanguage { get; set; } = Language.English; // Anglais par défaut
+    private Deck deck; // Pioche de cartes
+    public List<Card> PlayerHand { get; private set; } // Main du joueur
+    public List<Card> DealerHand { get; private set; } // Main du croupier
+    public GameState State { get; private set; }       // État actuel du jeu
+    public GameResult Result { get; private set; }     // Résultat de la partie
+    public int CurrentBet { get; private set; }        // Mise actuelle
+    public bool DealerHoleCardRevealed { get; private set; } // Carte cachée du croupier révélée ?
+    public Language GameLanguage { get; set; } = Language.English; // Langue du jeu
 
-    public event Action<string>? OnGameEvent;
+    public event Action<string>? OnGameEvent; // Événements pour l'UI ou les logs
 
+    // Constructeur : initialise le jeu
     public BlackjackGame()
     {
         deck = new Deck();
@@ -48,6 +52,7 @@ public class BlackjackGame
         Result = GameResult.None;
     }
 
+    // Démarre une nouvelle partie avec une mise donnée
     public void StartNewGame(int bet)
     {
         CurrentBet = bet;
@@ -56,7 +61,7 @@ public class BlackjackGame
         DealerHoleCardRevealed = false;
         Result = GameResult.None;
 
-        // Distribuer les cartes initiales
+        // Distribuer les cartes initiales (2 à chaque)
         PlayerHand.Add(deck.DrawCard());
         DealerHand.Add(deck.DrawCard());
         PlayerHand.Add(deck.DrawCard());
@@ -64,7 +69,7 @@ public class BlackjackGame
 
         OnGameEvent?.Invoke(Get("cards_dealt", GameLanguage));
 
-        // Vérifier le blackjack
+        // Vérifier le blackjack immédiat
         if (GetHandValue(PlayerHand) == 21)
         {
             DealerHoleCardRevealed = true;
@@ -87,6 +92,7 @@ public class BlackjackGame
         }
     }
 
+    // Le joueur pioche une carte
     public void Hit()
     {
         if (State != GameState.PlayerTurn) return;
@@ -95,6 +101,7 @@ public class BlackjackGame
         PlayerHand.Add(card);
         OnGameEvent?.Invoke(Get("card_drawn", GameLanguage, card.GetDisplayName()));
         
+        // Si le joueur dépasse 21, il perd
         if (GetHandValue(PlayerHand) > 21)
         {
             DealerHoleCardRevealed = true;
@@ -104,6 +111,7 @@ public class BlackjackGame
         }
     }
 
+    // Le joueur s'arrête, c'est au tour du croupier
     public void Stand()
     {
         if (State != GameState.PlayerTurn) return;
@@ -114,8 +122,10 @@ public class BlackjackGame
         PlayDealerTurn();
     }
 
+    // Logique du tour du croupier
     private void PlayDealerTurn()
     {
+        // Le croupier pioche jusqu'à 17 ou plus
         while (GetHandValue(DealerHand) < 17)
         {
             var card = deck.DrawCard();
@@ -126,6 +136,7 @@ public class BlackjackGame
         int playerValue = GetHandValue(PlayerHand);
         int dealerValue = GetHandValue(DealerHand);
 
+        // Déterminer le résultat de la partie
         if (dealerValue > 21)
         {
             Result = GameResult.DealerBust;
@@ -150,6 +161,7 @@ public class BlackjackGame
         State = GameState.GameOver;
     }
 
+    // Calcule la valeur d'une main (gère les As)
     public int GetHandValue(List<Card> hand)
     {
         int value = 0;
@@ -168,7 +180,7 @@ public class BlackjackGame
             }
         }
 
-        // Ajuster les As si nécessaire
+        // Ajuster les As si la main dépasse 21
         while (value > 21 && aces > 0)
         {
             value -= 10;
@@ -178,28 +190,32 @@ public class BlackjackGame
         return value;
     }
 
+    // Calcule les gains selon le résultat
     public int GetWinnings()
     {
         return Result switch
         {
-            GameResult.PlayerBlackjack => CurrentBet + (int)(CurrentBet * 1.5f), // Mise + bonus 1.5x
-            GameResult.PlayerWin or GameResult.DealerBust => CurrentBet * 2, // Mise + gains égaux à la mise
-            GameResult.Push => CurrentBet, // Récupération de la mise
-            GameResult.DealerWin or GameResult.PlayerBust => 0, // Perte totale
+            GameResult.PlayerBlackjack => CurrentBet + (int)(CurrentBet * 1.5f), // Blackjack paie 3:2
+            GameResult.PlayerWin or GameResult.DealerBust => CurrentBet * 2,      // Gain égal à la mise
+            GameResult.Push => CurrentBet,                                        // Mise rendue
+            GameResult.DealerWin or GameResult.PlayerBust => 0,                   // Perte totale
             _ => 0
         };
     }
 
+    // Calcule le résultat net (gains - mise)
     public int GetNetResult()
     {
         return GetWinnings() - CurrentBet;
     }
 
+    // Vérifie si le joueur peut doubler
     public bool CanDoubleDown()
     {
         return State == GameState.PlayerTurn && PlayerHand.Count == 2;
     }
 
+    // Double la mise et pioche une carte
     public void DoubleDown()
     {
         if (!CanDoubleDown()) return;
@@ -207,7 +223,8 @@ public class BlackjackGame
         CurrentBet *= 2;
         Hit();
         
-        if (State == GameState.PlayerTurn) // Si pas bust
+        // Si le joueur n'a pas bust, il doit s'arrêter
+        if (State == GameState.PlayerTurn)
         {
             Stand();
         }
