@@ -2,6 +2,7 @@ using Dalamud.Configuration;
 using Dalamud.Plugin;
 using System;
 using System.Text.Json.Serialization;
+using BlackjackPlugin.Localization;
 
 namespace BlackjackPlugin;
 
@@ -25,6 +26,9 @@ public class Configuration : IPluginConfiguration
     public bool ShowAnimations { get; set; } = true;
     public bool ShowTooltips { get; set; } = true;
     public bool AutoSave { get; set; } = true;
+    
+    // Paramètres de langue - Anglais par défaut
+    public Language CurrentLanguage { get; set; } = Language.English;
     
     // Paramètres visuels
     public float WindowOpacity { get; set; } = 1.0f;
@@ -78,6 +82,7 @@ public class Configuration : IPluginConfiguration
         ShowAnimations = true;
         ShowTooltips = true;
         AutoSave = true;
+        CurrentLanguage = Language.English; // Anglais par défaut
         WindowOpacity = 1.0f;
         UseCustomTheme = false;
         ThemeName = "Default";

@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using BlackjackPlugin.Localization;
+using static BlackjackPlugin.Localization.Localization;
 
 #nullable enable
 
@@ -33,6 +35,7 @@ public class BlackjackGame
     public GameResult Result { get; private set; }
     public int CurrentBet { get; private set; }
     public bool DealerHoleCardRevealed { get; private set; }
+    public Language GameLanguage { get; set; } = Language.English; // Anglais par défaut
 
     public event Action<string>? OnGameEvent;
 
@@ -59,7 +62,7 @@ public class BlackjackGame
         PlayerHand.Add(deck.DrawCard());
         DealerHand.Add(deck.DrawCard());
 
-        OnGameEvent?.Invoke("Cartes distribuées");
+        OnGameEvent?.Invoke(Get("cards_dealt", GameLanguage));
 
         // Vérifier le blackjack
         if (GetHandValue(PlayerHand) == 21)
@@ -69,13 +72,13 @@ public class BlackjackGame
             {
                 Result = GameResult.Push;
                 State = GameState.GameOver;
-                OnGameEvent?.Invoke("Double blackjack - Égalité!");
+                OnGameEvent?.Invoke(Get("double_blackjack", GameLanguage));
             }
             else
             {
                 Result = GameResult.PlayerBlackjack;
                 State = GameState.GameOver;
-                OnGameEvent?.Invoke("BLACKJACK!");
+                OnGameEvent?.Invoke(Get("blackjack", GameLanguage));
             }
         }
         else
@@ -90,14 +93,14 @@ public class BlackjackGame
 
         var card = deck.DrawCard();
         PlayerHand.Add(card);
-        OnGameEvent?.Invoke($"Carte tirée: {card.GetDisplayName()}");
+        OnGameEvent?.Invoke(Get("card_drawn", GameLanguage, card.GetDisplayName()));
         
         if (GetHandValue(PlayerHand) > 21)
         {
             DealerHoleCardRevealed = true;
             Result = GameResult.PlayerBust;
             State = GameState.GameOver;
-            OnGameEvent?.Invoke("BUST! Vous avez dépassé 21");
+            OnGameEvent?.Invoke(Get("bust_message", GameLanguage));
         }
     }
 
@@ -107,7 +110,7 @@ public class BlackjackGame
 
         DealerHoleCardRevealed = true;
         State = GameState.DealerTurn;
-        OnGameEvent?.Invoke("Le croupier révèle sa carte");
+        OnGameEvent?.Invoke(Get("dealer_reveals", GameLanguage));
         PlayDealerTurn();
     }
 
@@ -117,7 +120,7 @@ public class BlackjackGame
         {
             var card = deck.DrawCard();
             DealerHand.Add(card);
-            OnGameEvent?.Invoke($"Le croupier tire: {card.GetDisplayName()}");
+            OnGameEvent?.Invoke(Get("dealer_draws", GameLanguage, card.GetDisplayName()));
         }
 
         int playerValue = GetHandValue(PlayerHand);
@@ -126,22 +129,22 @@ public class BlackjackGame
         if (dealerValue > 21)
         {
             Result = GameResult.DealerBust;
-            OnGameEvent?.Invoke("Le croupier dépasse 21 - Vous gagnez!");
+            OnGameEvent?.Invoke(Get("dealer_bust", GameLanguage));
         }
         else if (playerValue > dealerValue)
         {
             Result = GameResult.PlayerWin;
-            OnGameEvent?.Invoke("Vous gagnez!");
+            OnGameEvent?.Invoke(Get("you_win", GameLanguage));
         }
         else if (dealerValue > playerValue)
         {
             Result = GameResult.DealerWin;
-            OnGameEvent?.Invoke("Le croupier gagne");
+            OnGameEvent?.Invoke(Get("dealer_wins", GameLanguage));
         }
         else
         {
             Result = GameResult.Push;
-            OnGameEvent?.Invoke("Égalité!");
+            OnGameEvent?.Invoke(Get("tie", GameLanguage));
         }
 
         State = GameState.GameOver;

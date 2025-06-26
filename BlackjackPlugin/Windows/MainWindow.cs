@@ -3,7 +3,9 @@ using System.Numerics;
 using Dalamud.Interface.Windowing;
 using ImGuiNET;
 using BlackjackPlugin.GameLogic;
+using BlackjackPlugin.Localization;
 using System.Collections.Generic;
+using static BlackjackPlugin.Localization.Localization;
 
 namespace BlackjackPlugin.Windows;
 
@@ -15,7 +17,8 @@ public class MainWindow : Window, IDisposable
     private List<string> gameLog;
     private const int MaxLogEntries = 10;
 
-    public MainWindow(Plugin plugin) : base("🎰 Blackjack Casino")
+    public MainWindow(Plugin plugin) : base(
+        Get("window_title", plugin.Configuration.CurrentLanguage))
     {
         SizeConstraints = new WindowSizeConstraints
         {
@@ -48,6 +51,11 @@ public class MainWindow : Window, IDisposable
 
     public override void Draw()
     {
+        var lang = plugin.Configuration.CurrentLanguage;
+        
+        // Mise à jour du titre de la fenêtre si la langue a changé
+        WindowName = Get("window_title", lang);
+        
         DrawHeader();
         ImGui.Separator();
         
@@ -62,23 +70,27 @@ public class MainWindow : Window, IDisposable
 
     private void DrawHeader()
     {
+        var lang = plugin.Configuration.CurrentLanguage;
+        
         // Style du header
         ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(1.0f, 0.84f, 0.0f, 1.0f)); // Or
-        ImGui.Text($"💰 Argent: {plugin.Configuration.PlayerMoney} Gil");
+        ImGui.Text($"{Get("money", lang)}: {plugin.Configuration.PlayerMoney} Gil");
         ImGui.PopStyleColor();
         
         ImGui.SameLine();
         if (game.CurrentBet > 0)
         {
-            ImGui.Text($"🎯 Mise: {game.CurrentBet} Gil");
+            ImGui.Text($"{Get("bet", lang)}: {game.CurrentBet} Gil");
         }
     }
 
     private void DrawGameArea()
     {
+        var lang = plugin.Configuration.CurrentLanguage;
+        
         // Zone du croupier
         ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.8f, 0.2f, 0.2f, 1.0f)); // Rouge
-        ImGui.Text("🎩 Croupier:");
+        ImGui.Text(Get("dealer", lang));
         ImGui.PopStyleColor();
         
         ImGui.Indent();
@@ -87,16 +99,16 @@ public class MainWindow : Window, IDisposable
         if (game.DealerHoleCardRevealed)
         {
             int dealerValue = game.GetHandValue(game.DealerHand);
-            ImGui.Text($"Total: {dealerValue}");
+            ImGui.Text($"{Get("total", lang)}: {dealerValue}");
             if (dealerValue > 21)
             {
                 ImGui.SameLine();
-                ImGui.TextColored(new Vector4(1, 0, 0, 1), "BUST!");
+                ImGui.TextColored(new Vector4(1, 0, 0, 1), Get("bust", lang));
             }
         }
         else if (game.DealerHand.Count > 0)
         {
-            ImGui.Text($"Total: {game.DealerHand[0].GetBlackjackValue()} + ?");
+            ImGui.Text($"{Get("total", lang)}: {game.DealerHand[0].GetBlackjackValue()} + ?");
         }
         ImGui.Unindent();
         
@@ -105,7 +117,7 @@ public class MainWindow : Window, IDisposable
 
         // Zone du joueur
         ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.2f, 0.8f, 0.2f, 1.0f)); // Vert
-        ImGui.Text("👤 Votre main:");
+        ImGui.Text(Get("your_hand", lang));
         ImGui.PopStyleColor();
         
         ImGui.Indent();
@@ -114,17 +126,17 @@ public class MainWindow : Window, IDisposable
         if (game.PlayerHand.Count > 0)
         {
             int playerValue = game.GetHandValue(game.PlayerHand);
-            ImGui.Text($"Total: {playerValue}");
+            ImGui.Text($"{Get("total", lang)}: {playerValue}");
             
             if (playerValue > 21)
             {
                 ImGui.SameLine();
-                ImGui.TextColored(new Vector4(1, 0, 0, 1), "BUST!");
+                ImGui.TextColored(new Vector4(1, 0, 0, 1), Get("bust", lang));
             }
             else if (playerValue == 21 && game.PlayerHand.Count == 2)
             {
                 ImGui.SameLine();
-                ImGui.TextColored(new Vector4(0, 1, 0, 1), "BLACKJACK!");
+                ImGui.TextColored(new Vector4(0, 1, 0, 1), Get("blackjack", lang));
             }
         }
         ImGui.Unindent();
@@ -175,7 +187,8 @@ public class MainWindow : Window, IDisposable
                 break;
                 
             case GameState.DealerTurn:
-                ImGui.Text("🎲 Le croupier joue...");
+                var lang = plugin.Configuration.CurrentLanguage;
+                ImGui.Text(Get("dealer_playing", lang));
                 break;
                 
             case GameState.GameOver:
@@ -186,7 +199,9 @@ public class MainWindow : Window, IDisposable
 
     private void DrawBettingControls()
     {
-        ImGui.Text("💸 Placez votre mise:");
+        var lang = plugin.Configuration.CurrentLanguage;
+        
+        ImGui.Text(Get("place_bet", lang));
         
         // Boutons de mise rapide
         if (ImGui.Button("10 Gil")) betAmount = 10;
@@ -207,14 +222,14 @@ public class MainWindow : Window, IDisposable
         
         if (plugin.Configuration.PlayerMoney <= 0)
         {
-            ImGui.TextColored(new Vector4(1, 0, 0, 1), "Vous n'avez plus d'argent!");
-            if (ImGui.Button("Réinitialiser l'argent"))
+            ImGui.TextColored(new Vector4(1, 0, 0, 1), Get("no_money", lang));
+            if (ImGui.Button(Get("reset_money", lang)))
             {
                 plugin.Configuration.PlayerMoney = 1000;
                 plugin.Configuration.Save();
             }
         }
-        else if (ImGui.Button("🎯 Distribuer les cartes") && betAmount <= plugin.Configuration.PlayerMoney)
+        else if (ImGui.Button(Get("deal_cards", lang)) && betAmount <= plugin.Configuration.PlayerMoney)
         {
             // Ne pas déduire l'argent ici, juste commencer la partie
             game.StartNewGame(betAmount);
@@ -223,15 +238,17 @@ public class MainWindow : Window, IDisposable
 
     private void DrawPlayerTurnControls()
     {
+        var lang = plugin.Configuration.CurrentLanguage;
+        
         // Boutons principaux
-        if (ImGui.Button("🃏 Tirer une carte"))
+        if (ImGui.Button(Get("hit", lang)))
         {
             game.Hit();
         }
         
         ImGui.SameLine();
         
-        if (ImGui.Button("✋ Rester"))
+        if (ImGui.Button(Get("stand", lang)))
         {
             game.Stand();
         }
@@ -240,7 +257,7 @@ public class MainWindow : Window, IDisposable
         if (game.CanDoubleDown() && plugin.Configuration.PlayerMoney >= game.CurrentBet)
         {
             ImGui.SameLine();
-            if (ImGui.Button("⬆️ Double"))
+            if (ImGui.Button(Get("double", lang)))
             {
                 game.DoubleDown();
             }
@@ -249,12 +266,14 @@ public class MainWindow : Window, IDisposable
 
     private void DrawGameOverControls()
     {
+        var lang = plugin.Configuration.CurrentLanguage;
+        
         string resultText = game.Result switch
         {
-            GameResult.PlayerBlackjack => "🎉 BLACKJACK! Vous gagnez!",
-            GameResult.PlayerWin or GameResult.DealerBust => "🎊 Vous gagnez!",
-            GameResult.DealerWin or GameResult.PlayerBust => "😞 Le croupier gagne",
-            GameResult.Push => "🤝 Égalité!",
+            GameResult.PlayerBlackjack => Get("blackjack_win", lang),
+            GameResult.PlayerWin or GameResult.DealerBust => Get("player_win", lang),
+            GameResult.DealerWin or GameResult.PlayerBust => Get("dealer_win", lang),
+            GameResult.Push => Get("push", lang),
             _ => ""
         };
         
@@ -272,20 +291,20 @@ public class MainWindow : Window, IDisposable
         
         if (netResult > 0)
         {
-            ImGui.TextColored(new Vector4(0, 1, 0, 1), $"💰 Gains nets: +{netResult} Gil");
+            ImGui.TextColored(new Vector4(0, 1, 0, 1), Get("net_winnings", lang, netResult));
         }
         else if (netResult < 0)
         {
-            ImGui.TextColored(new Vector4(1, 0, 0, 1), $"💸 Pertes: {netResult} Gil");
+            ImGui.TextColored(new Vector4(1, 0, 0, 1), Get("losses", lang, netResult));
         }
         else
         {
-            ImGui.Text("💰 Égalité - Mise récupérée");
+            ImGui.Text(Get("bet_recovered", lang));
         }
         
         ImGui.Spacing();
         
-        if (ImGui.Button("🔄 Nouvelle partie"))
+        if (ImGui.Button(Get("new_game", lang)))
         {
             // Appliquer le résultat financier de la partie
             ApplyGameResult();
@@ -299,7 +318,9 @@ public class MainWindow : Window, IDisposable
 
     private void DrawGameLog()
     {
-        if (ImGui.CollapsingHeader("📜 Historique du jeu"))
+        var lang = plugin.Configuration.CurrentLanguage;
+        
+        if (ImGui.CollapsingHeader(Get("game_history", lang)))
         {
             ImGui.BeginChild("GameLog", new Vector2(0, 100), true);
             
