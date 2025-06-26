@@ -33,6 +33,9 @@ public class MainWindow : Window, IDisposable
 
         // S'abonner aux événements du jeu
         game.OnGameEvent += AddToLog;
+        
+        // Synchroniser la langue du jeu
+        game.GameLanguage = plugin.Configuration.CurrentLanguage;
     }
 
     public void Dispose()
@@ -53,8 +56,16 @@ public class MainWindow : Window, IDisposable
     {
         var lang = plugin.Configuration.CurrentLanguage;
         
-        // Mise à jour du titre de la fenêtre si la langue a changé
+        // Mise à jour du titre de la fenêtre et de la langue du jeu
         WindowName = Get("window_title", lang);
+        game.GameLanguage = lang;
+        
+        // Vérifier si une sauvegarde est sélectionnée
+        if (plugin.Configuration.CurrentSave == null)
+        {
+            DrawNoSaveSelected();
+            return;
+        }
         
         DrawHeader();
         ImGui.Separator();
@@ -68,14 +79,36 @@ public class MainWindow : Window, IDisposable
         DrawGameLog();
     }
 
-    private void DrawHeader()
+    private void DrawNoSaveSelected()
     {
         var lang = plugin.Configuration.CurrentLanguage;
         
+        ImGui.SetCursorPosY(ImGui.GetWindowHeight() / 2 - 50);
+        
+        var text = Get("select_save", lang);
+        var textSize = ImGui.CalcTextSize(text);
+        ImGui.SetCursorPosX((ImGui.GetWindowWidth() - textSize.X) / 2);
+        ImGui.TextColored(new Vector4(1.0f, 0.8f, 0.2f, 1.0f), text);
+        
+        ImGui.SetCursorPosX((ImGui.GetWindowWidth() - 200) / 2);
+        if (ImGui.Button(Get("save_management", lang), new Vector2(200, 30)))
+        {
+            plugin.ToggleConfigUI();
+        }
+    }
+
+    private void DrawHeader()
+    {
+        var lang = plugin.Configuration.CurrentLanguage;
+        var currentSave = plugin.Configuration.CurrentSave!;
+        
         // Style du header
         ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(1.0f, 0.84f, 0.0f, 1.0f)); // Or
-        ImGui.Text($"{Get("money", lang)}: {plugin.Configuration.PlayerMoney} Gil");
+        ImGui.Text($"{Get("money", lang)}: {currentSave.PlayerMoney} Gil");
         ImGui.PopStyleColor();
+        
+        ImGui.SameLine();
+        ImGui.Text($"{Get("current_save", lang)}: {currentSave.Name}");
         
         ImGui.SameLine();
         if (game.CurrentBet > 0)
@@ -200,6 +233,7 @@ public class MainWindow : Window, IDisposable
     private void DrawBettingControls()
     {
         var lang = plugin.Configuration.CurrentLanguage;
+        var currentSave = plugin.Configuration.CurrentSave!;
         
         ImGui.Text(Get("place_bet", lang));
         
@@ -210,28 +244,26 @@ public class MainWindow : Window, IDisposable
         ImGui.SameLine();
         if (ImGui.Button("100 Gil")) betAmount = 100;
         ImGui.SameLine();
-        if (ImGui.Button("Max")) betAmount = plugin.Configuration.PlayerMoney;
+        if (ImGui.Button("Max")) betAmount = currentSave.PlayerMoney;
         
         ImGui.SetNextItemWidth(150);
-        ImGui.SliderInt("##bet", ref betAmount, 10, plugin.Configuration.PlayerMoney);
+        ImGui.SliderInt("##bet", ref betAmount, 10, currentSave.PlayerMoney);
         
         if (betAmount < 10) betAmount = 10;
-        if (betAmount > plugin.Configuration.PlayerMoney) betAmount = plugin.Configuration.PlayerMoney;
+        if (betAmount > currentSave.PlayerMoney) betAmount = currentSave.PlayerMoney;
         
         ImGui.Spacing();
         
-        if (plugin.Configuration.PlayerMoney <= 0)
+        if (currentSave.PlayerMoney <= 0)
         {
             ImGui.TextColored(new Vector4(1, 0, 0, 1), Get("no_money", lang));
             if (ImGui.Button(Get("reset_money", lang)))
             {
-                plugin.Configuration.PlayerMoney = 1000;
-                plugin.Configuration.Save();
+                plugin.Configuration.UpdatePlayerMoney(1000);
             }
         }
-        else if (ImGui.Button(Get("deal_cards", lang)) && betAmount <= plugin.Configuration.PlayerMoney)
+        else if (ImGui.Button(Get("deal_cards", lang)) && betAmount <= currentSave.PlayerMoney)
         {
-            // Ne pas déduire l'argent ici, juste commencer la partie
             game.StartNewGame(betAmount);
         }
     }
@@ -239,6 +271,7 @@ public class MainWindow : Window, IDisposable
     private void DrawPlayerTurnControls()
     {
         var lang = plugin.Configuration.CurrentLanguage;
+        var currentSave = plugin.Configuration.CurrentSave!;
         
         // Boutons principaux
         if (ImGui.Button(Get("hit", lang)))
@@ -254,7 +287,7 @@ public class MainWindow : Window, IDisposable
         }
         
         // Double Down si possible
-        if (game.CanDoubleDown() && plugin.Configuration.PlayerMoney >= game.CurrentBet)
+        if (game.CanDoubleDown() && currentSave.PlayerMoney >= game.CurrentBet)
         {
             ImGui.SameLine();
             if (ImGui.Button(Get("double", lang)))
@@ -312,6 +345,7 @@ public class MainWindow : Window, IDisposable
             // Réinitialiser le jeu
             game = new BlackjackGame();
             game.OnGameEvent += AddToLog;
+            game.GameLanguage = lang;
             gameLog.Clear();
         }
     }
@@ -339,16 +373,20 @@ public class MainWindow : Window, IDisposable
 
     private void ApplyGameResult()
     {
+        var currentSave = plugin.Configuration.CurrentSave!;
+        
         // Déduire la mise au début de la partie
-        plugin.Configuration.PlayerMoney -= game.CurrentBet;
+        int newMoney = currentSave.PlayerMoney - game.CurrentBet;
         
         // Ajouter les gains totaux
         int winnings = game.GetWinnings();
-        plugin.Configuration.PlayerMoney += winnings;
+        newMoney += winnings;
         
         // S'assurer que l'argent ne devient pas négatif
-        if (plugin.Configuration.PlayerMoney < 0)
-            plugin.Configuration.PlayerMoney = 0;
+        if (newMoney < 0) newMoney = 0;
+        
+        // Mettre à jour l'argent
+        plugin.Configuration.UpdatePlayerMoney(newMoney);
         
         // Calculer le résultat net pour les statistiques
         int netResult = winnings - game.CurrentBet;
@@ -360,6 +398,5 @@ public class MainWindow : Window, IDisposable
         bool blackjack = game.Result == GameResult.PlayerBlackjack;
         
         plugin.Configuration.UpdateStats(won, netResult, blackjack);
-        plugin.Configuration.Save();
     }
 }

@@ -3,7 +3,9 @@ using Dalamud.Plugin;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Services;
 using BlackjackPlugin.Windows;
+using BlackjackPlugin.Localization;
 using System;
+using static BlackjackPlugin.Localization.Localization;
 
 namespace BlackjackPlugin;
 
@@ -52,20 +54,20 @@ public sealed class Plugin : IDalamudPlugin
         // Commandes principales
         commandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
         {
-            HelpMessage = "Ouvre le jeu de blackjack. Utilisez '/blackjack help' pour plus d'options."
+            HelpMessage = "Opens the blackjack game. Use '/blackjack help' for more options."
         });
         
         // Alias pour la commande
         commandManager.AddHandler(CommandAlias, new CommandInfo(OnCommand)
         {
-            HelpMessage = "Alias pour /blackjack"
+            HelpMessage = "Alias for /blackjack"
         });
 
         pluginInterface.UiBuilder.Draw += DrawUI;
         pluginInterface.UiBuilder.OpenConfigUi += ToggleConfigUI;
         pluginInterface.UiBuilder.OpenMainUi += ToggleMainUI;
 
-        pluginLog.Information("Plugin Blackjack Casino chargé avec succès!");
+        pluginLog.Information(Get("plugin_loaded", Configuration.CurrentLanguage));
     }
 
     /// <inheritdoc/>
@@ -83,12 +85,13 @@ public sealed class Plugin : IDalamudPlugin
         pluginInterface.UiBuilder.OpenConfigUi -= ToggleConfigUI;
         pluginInterface.UiBuilder.OpenMainUi -= ToggleMainUI;
 
-        pluginLog.Information("Plugin Blackjack Casino déchargé proprement.");
+        pluginLog.Information(Get("plugin_unloaded", Configuration.CurrentLanguage));
     }
 
     private void OnCommand(string command, string args)
     {
         var arguments = args.Trim().ToLowerInvariant();
+        var lang = Configuration.CurrentLanguage;
         
         switch (arguments)
         {
@@ -100,18 +103,25 @@ public sealed class Plugin : IDalamudPlugin
                 ToggleConfigUI();
                 break;
             case "help":
-                pluginLog.Information("Commandes disponibles:");
-                pluginLog.Information("/blackjack - Ouvre le jeu");
-                pluginLog.Information("/blackjack config - Ouvre la configuration");
-                pluginLog.Information("/blackjack help - Affiche cette aide");
+                pluginLog.Information(Get("available_commands", lang));
+                pluginLog.Information(Get("cmd_open_game", lang));
+                pluginLog.Information(Get("cmd_open_config", lang));
+                pluginLog.Information(Get("cmd_help", lang));
                 break;
             case "reset":
-                Configuration.PlayerMoney = 1000;
-                Configuration.Save();
-                pluginLog.Information("Argent réinitialisé à 1000 Gil!");
+                // Réinitialiser la sauvegarde actuelle si elle existe
+                if (Configuration.CurrentSave != null)
+                {
+                    Configuration.UpdatePlayerMoney(1000);
+                    pluginLog.Information(Get("money_reset", lang));
+                }
+                else
+                {
+                    pluginLog.Warning("No save selected. Please create or select a save first.");
+                }
                 break;
             default:
-                pluginLog.Warning($"Commande inconnue: {arguments}. Utilisez '/blackjack help' pour l'aide.");
+                pluginLog.Warning(Get("unknown_command", lang, arguments));
                 break;
         }
     }

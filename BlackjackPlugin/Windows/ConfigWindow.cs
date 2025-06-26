@@ -10,6 +10,7 @@ namespace BlackjackPlugin.Windows;
 public class ConfigWindow : Window, IDisposable
 {
     private Configuration configuration;
+    private string newSaveName = "";
 
     public ConfigWindow(Plugin plugin) : base(
         Get("config_title", plugin.Configuration.CurrentLanguage))
@@ -17,7 +18,7 @@ public class ConfigWindow : Window, IDisposable
         Flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
                 ImGuiWindowFlags.NoScrollWithMouse;
 
-        Size = new Vector2(350, 300);
+        Size = new Vector2(450, 500);
         SizeCondition = ImGuiCond.Always;
 
         configuration = plugin.Configuration;
@@ -32,24 +33,114 @@ public class ConfigWindow : Window, IDisposable
         // Mise à jour du titre de la fenêtre si la langue a changé
         WindowName = Get("config_title", lang);
         
-        ImGui.Text(Get("money_management", lang));
+        DrawSaveManagement();
         ImGui.Separator();
         
-        var playerMoney = configuration.PlayerMoney;
-        if (ImGui.InputInt(Get("player_money", lang), ref playerMoney))
+        DrawGameOptions();
+        ImGui.Separator();
+        
+        DrawLanguageSettings();
+        ImGui.Separator();
+        
+        DrawButtons();
+    }
+
+    private void DrawSaveManagement()
+    {
+        var lang = configuration.CurrentLanguage;
+        
+        ImGui.Text(Get("save_management", lang));
+        ImGui.Separator();
+        
+        // Afficher les 3 emplacements de sauvegarde
+        for (int i = 0; i < configuration.SaveSlots.Length; i++)
         {
-            configuration.PlayerMoney = Math.Max(0, playerMoney);
+            var slot = configuration.SaveSlots[i];
+            var isCurrentSlot = configuration.CurrentSaveSlot == i;
+            
+            ImGui.PushID(i);
+            
+            // Couleur de fond pour le slot actuel
+            if (isCurrentSlot)
+            {
+                ImGui.PushStyleColor(ImGuiCol.ChildBg, new Vector4(0.2f, 0.4f, 0.2f, 0.3f));
+            }
+            
+            ImGui.BeginChild($"slot_{i}", new Vector2(0, 80), true);
+            
+            ImGui.Text($"{Get("slot", lang)} {i + 1}:");
+            ImGui.SameLine();
+            
+            if (slot.IsEmpty)
+            {
+                ImGui.TextColored(new Vector4(0.6f, 0.6f, 0.6f, 1.0f), Get("empty", lang));
+                
+                ImGui.SetNextItemWidth(200);
+                ImGui.InputText($"##name_{i}", ref newSaveName, 50);
+                ImGui.SameLine();
+                
+                if (ImGui.Button(Get("create_save", lang)) && !string.IsNullOrWhiteSpace(newSaveName))
+                {
+                    configuration.CreateSave(i, newSaveName.Trim());
+                    newSaveName = "";
+                }
+            }
+            else
+            {
+                ImGui.Text($"{slot.Name}");
+                
+                ImGui.Text($"{Get("money", lang)}: {slot.PlayerMoney} Gil | " +
+                          $"{Get("games_played", lang)}: {slot.GamesPlayed} | " +
+                          $"{Get("win_rate", lang)}: {slot.WinPercentage:F1}%");
+                
+                ImGui.Text($"{Get("created", lang)}: {slot.CreatedDate:dd/MM/yyyy} | " +
+                          $"{Get("last_played", lang)}: {slot.LastPlayed:dd/MM/yyyy}");
+                
+                // Boutons d'action
+                if (!isCurrentSlot && ImGui.Button(Get("load_save", lang)))
+                {
+                    configuration.SelectSave(i);
+                }
+                
+                if (!isCurrentSlot) ImGui.SameLine();
+                
+                if (ImGui.Button(Get("reset_save", lang)))
+                {
+                    slot.Reset();
+                    configuration.Save();
+                }
+                
+                ImGui.SameLine();
+                
+                if (ImGui.Button(Get("delete_save", lang)))
+                {
+                    configuration.DeleteSave(i);
+                }
+            }
+            
+            ImGui.EndChild();
+            
+            if (isCurrentSlot)
+            {
+                ImGui.PopStyleColor();
+            }
+            
+            ImGui.PopID();
         }
+    }
+
+    private void DrawGameOptions()
+    {
+        var lang = configuration.CurrentLanguage;
+        
+        ImGui.Text(Get("game_options", lang));
+        ImGui.Separator();
 
         var defaultBet = configuration.DefaultBet;
         if (ImGui.InputInt(Get("default_bet", lang), ref defaultBet))
         {
             configuration.DefaultBet = Math.Max(10, defaultBet);
         }
-        
-        ImGui.Spacing();
-        ImGui.Text(Get("game_options", lang));
-        ImGui.Separator();
 
         var soundEnabled = configuration.SoundEnabled;
         if (ImGui.Checkbox(Get("sounds_enabled", lang), ref soundEnabled))
@@ -62,8 +153,12 @@ public class ConfigWindow : Window, IDisposable
         {
             configuration.ShowAnimations = showAnimations;
         }
+    }
+
+    private void DrawLanguageSettings()
+    {
+        var lang = configuration.CurrentLanguage;
         
-        ImGui.Spacing();
         ImGui.Text(Get("language_settings", lang));
         ImGui.Separator();
         
@@ -72,8 +167,11 @@ public class ConfigWindow : Window, IDisposable
         {
             configuration.CurrentLanguage = useFrench ? Language.French : Language.English;
         }
-        
-        ImGui.Spacing();
+    }
+
+    private void DrawButtons()
+    {
+        var lang = configuration.CurrentLanguage;
         
         if (ImGui.Button(Get("save", lang)))
         {
@@ -84,12 +182,7 @@ public class ConfigWindow : Window, IDisposable
         
         if (ImGui.Button(Get("reset", lang)))
         {
-            configuration.PlayerMoney = 1000;
-            configuration.DefaultBet = 50;
-            configuration.SoundEnabled = true;
-            configuration.ShowAnimations = true;
-            // Ne pas réinitialiser la langue
-            configuration.Save();
+            configuration.Reset();
         }
     }
 }

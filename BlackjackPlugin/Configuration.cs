@@ -3,11 +3,12 @@ using Dalamud.Plugin;
 using System;
 using System.Text.Json.Serialization;
 using BlackjackPlugin.Localization;
+using BlackjackPlugin.SaveSystem;
 
 namespace BlackjackPlugin;
 
 /// <summary>
-/// Configuration du plugin Blackjack avec toutes les options modernes
+/// Configuration du plugin Blackjack avec système de sauvegarde
 /// </summary>
 [Serializable]
 public class Configuration : IPluginConfiguration
@@ -15,8 +16,11 @@ public class Configuration : IPluginConfiguration
     /// <inheritdoc/>
     public int Version { get; set; } = 1;
 
+    // Système de sauvegarde
+    public SaveSlot[] SaveSlots { get; set; } = new SaveSlot[3];
+    public int CurrentSaveSlot { get; set; } = -1; // -1 = aucun slot sélectionné
+    
     // Paramètres de jeu
-    public int PlayerMoney { get; set; } = 1000;
     public int DefaultBet { get; set; } = 50;
     public int MinBet { get; set; } = 10;
     public int MaxBet { get; set; } = 500;
@@ -27,7 +31,7 @@ public class Configuration : IPluginConfiguration
     public bool ShowTooltips { get; set; } = true;
     public bool AutoSave { get; set; } = true;
     
-    // Paramètres de langue - Anglais par défaut
+    // Paramètres de langue
     public Language CurrentLanguage { get; set; } = Language.English;
     
     // Paramètres visuels
@@ -35,23 +39,37 @@ public class Configuration : IPluginConfiguration
     public bool UseCustomTheme { get; set; } = false;
     public string ThemeName { get; set; } = "Default";
     
-    // Statistiques
-    public int GamesPlayed { get; set; } = 0;
-    public int GamesWon { get; set; } = 0;
-    public int TotalWinnings { get; set; } = 0;
-    public int BlackjacksHit { get; set; } = 0;
-    
     // Paramètres avancés
     public bool ShowProbabilities { get; set; } = false;
     public bool EnableHotkeys { get; set; } = true;
     public bool LogGameHistory { get; set; } = false;
     
     // Paramètres de sécurité
-    public DateTime LastPlayed { get; set; } = DateTime.MinValue;
     public bool FirstTimeUser { get; set; } = true;
 
     [JsonIgnore]
     private IDalamudPluginInterface? pluginInterface;
+
+    public Configuration()
+    {
+        // Initialiser les emplacements de sauvegarde
+        for (int i = 0; i < SaveSlots.Length; i++)
+        {
+            SaveSlots[i] = new SaveSlot();
+        }
+    }
+
+    /// <summary>
+    /// Obtient la sauvegarde actuellement active
+    /// </summary>
+    [JsonIgnore]
+    public SaveSlot? CurrentSave => CurrentSaveSlot >= 0 && CurrentSaveSlot < SaveSlots.Length ? SaveSlots[CurrentSaveSlot] : null;
+    
+    /// <summary>
+    /// Obtient l'argent du joueur actuel
+    /// </summary>
+    [JsonIgnore]
+    public int PlayerMoney => CurrentSave?.PlayerMoney ?? 0;
 
     /// <summary>
     /// Initialise la configuration avec l'interface du plugin
@@ -59,6 +77,16 @@ public class Configuration : IPluginConfiguration
     public void Initialize(IDalamudPluginInterface pluginInterface)
     {
         this.pluginInterface = pluginInterface;
+        
+        // S'assurer que les slots sont initialisés
+        if (SaveSlots == null || SaveSlots.Length != 3)
+        {
+            SaveSlots = new SaveSlot[3];
+            for (int i = 0; i < SaveSlots.Length; i++)
+            {
+                SaveSlots[i] = new SaveSlot();
+            }
+        }
     }
 
     /// <summary>
@@ -70,11 +98,75 @@ public class Configuration : IPluginConfiguration
     }
 
     /// <summary>
-    /// Remet la configuration aux valeurs par défaut
+    /// Crée une nouvelle sauvegarde dans l'emplacement spécifié
+    /// </summary>
+    public void CreateSave(int slotIndex, string name)
+    {
+        if (slotIndex >= 0 && slotIndex < SaveSlots.Length)
+        {
+            SaveSlots[slotIndex] = new SaveSlot(name);
+            CurrentSaveSlot = slotIndex;
+            Save();
+        }
+    }
+    
+    /// <summary>
+    /// Supprime la sauvegarde dans l'emplacement spécifié
+    /// </summary>
+    public void DeleteSave(int slotIndex)
+    {
+        if (slotIndex >= 0 && slotIndex < SaveSlots.Length)
+        {
+            SaveSlots[slotIndex].Clear();
+            if (CurrentSaveSlot == slotIndex)
+            {
+                CurrentSaveSlot = -1;
+            }
+            Save();
+        }
+    }
+    
+    /// <summary>
+    /// Sélectionne une sauvegarde
+    /// </summary>
+    public void SelectSave(int slotIndex)
+    {
+        if (slotIndex >= 0 && slotIndex < SaveSlots.Length && !SaveSlots[slotIndex].IsEmpty)
+        {
+            CurrentSaveSlot = slotIndex;
+            Save();
+        }
+    }
+    
+    /// <summary>
+    /// Met à jour l'argent du joueur actuel
+    /// </summary>
+    public void UpdatePlayerMoney(int newAmount)
+    {
+        if (CurrentSave != null)
+        {
+            CurrentSave.PlayerMoney = Math.Max(0, newAmount);
+            if (AutoSave) Save();
+        }
+    }
+    
+    /// <summary>
+    /// Met à jour les statistiques de la sauvegarde actuelle
+    /// </summary>
+    public void UpdateStats(bool won, int winnings, bool blackjack = false)
+    {
+        if (CurrentSave != null)
+        {
+            CurrentSave.UpdateStats(won, winnings, blackjack);
+            if (AutoSave) Save();
+        }
+    }
+
+    /// <summary>
+    /// Remet la configuration aux valeurs par défaut (sans toucher aux sauvegardes)
     /// </summary>
     public void Reset()
     {
-        PlayerMoney = 1000;
         DefaultBet = 50;
         MinBet = 10;
         MaxBet = 500;
@@ -82,7 +174,7 @@ public class Configuration : IPluginConfiguration
         ShowAnimations = true;
         ShowTooltips = true;
         AutoSave = true;
-        CurrentLanguage = Language.English; // Anglais par défaut
+        CurrentLanguage = Language.English;
         WindowOpacity = 1.0f;
         UseCustomTheme = false;
         ThemeName = "Default";
@@ -91,26 +183,6 @@ public class Configuration : IPluginConfiguration
         LogGameHistory = false;
         FirstTimeUser = true;
         
-        // Ne pas réinitialiser les statistiques
         Save();
     }
-
-    /// <summary>
-    /// Met à jour les statistiques après une partie
-    /// </summary>
-    public void UpdateStats(bool won, int winnings, bool blackjack = false)
-    {
-        GamesPlayed++;
-        if (won) GamesWon++;
-        TotalWinnings += winnings;
-        if (blackjack) BlackjacksHit++;
-        LastPlayed = DateTime.Now;
-        
-        if (AutoSave) Save();
-    }
-
-    /// <summary>
-    /// Calcule le pourcentage de victoires
-    /// </summary>
-    public double WinPercentage => GamesPlayed > 0 ? (double)GamesWon / GamesPlayed * 100 : 0;
 }

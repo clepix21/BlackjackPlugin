@@ -4,7 +4,7 @@ namespace BlackjackPlugin.Localization;
 
 public enum Language
 {
-    English, // Anglais en premier
+    English,
     French
 }
 
@@ -19,6 +19,25 @@ public static class Localization
         // Header
         ["money"] = new() { [Language.English] = "💰 Money", [Language.French] = "💰 Argent" },
         ["bet"] = new() { [Language.English] = "🎯 Bet", [Language.French] = "🎯 Mise" },
+        ["current_save"] = new() { [Language.English] = "💾 Save", [Language.French] = "💾 Sauvegarde" },
+        
+        // Système de sauvegarde
+        ["save_management"] = new() { [Language.English] = "💾 Save Management", [Language.French] = "💾 Gestion des sauvegardes" },
+        ["no_save_selected"] = new() { [Language.English] = "No save selected", [Language.French] = "Aucune sauvegarde sélectionnée" },
+        ["select_save"] = new() { [Language.English] = "Please select or create a save to play", [Language.French] = "Veuillez sélectionner ou créer une sauvegarde pour jouer" },
+        ["slot"] = new() { [Language.English] = "Slot", [Language.French] = "Emplacement" },
+        ["empty"] = new() { [Language.English] = "Empty", [Language.French] = "Vide" },
+        ["create_save"] = new() { [Language.English] = "Create", [Language.French] = "Créer" },
+        ["load_save"] = new() { [Language.English] = "Load", [Language.French] = "Charger" },
+        ["delete_save"] = new() { [Language.English] = "Delete", [Language.French] = "Supprimer" },
+        ["reset_save"] = new() { [Language.English] = "Reset", [Language.French] = "Réinitialiser" },
+        ["save_name"] = new() { [Language.English] = "Save name", [Language.French] = "Nom de la sauvegarde" },
+        ["created"] = new() { [Language.English] = "Created", [Language.French] = "Créée" },
+        ["last_played"] = new() { [Language.English] = "Last played", [Language.French] = "Dernière partie" },
+        ["games_played"] = new() { [Language.English] = "Games", [Language.French] = "Parties" },
+        ["win_rate"] = new() { [Language.English] = "Win rate", [Language.French] = "Taux de victoire" },
+        ["total_winnings"] = new() { [Language.English] = "Total winnings", [Language.French] = "Gains totaux" },
+        ["blackjacks"] = new() { [Language.English] = "Blackjacks", [Language.French] = "Blackjacks" },
         
         // Zones de jeu
         ["dealer"] = new() { [Language.English] = "🎩 Dealer:", [Language.French] = "🎩 Croupier:" },
@@ -66,7 +85,6 @@ public static class Localization
         
         // Configuration
         ["money_management"] = new() { [Language.English] = "💰 Money Management", [Language.French] = "💰 Gestion de l'argent" },
-        ["player_money"] = new() { [Language.English] = "Player money", [Language.French] = "Argent du joueur" },
         ["default_bet"] = new() { [Language.English] = "Default bet", [Language.French] = "Mise par défaut" },
         ["game_options"] = new() { [Language.English] = "🎮 Game Options", [Language.French] = "🎮 Options de jeu" },
         ["sounds_enabled"] = new() { [Language.English] = "Sounds enabled", [Language.French] = "Sons activés" },
