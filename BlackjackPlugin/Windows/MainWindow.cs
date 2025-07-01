@@ -4,7 +4,6 @@ using Dalamud.Interface.Windowing;
 using Dalamud.Interface.Utility.Raii;
 using ImGuiNET;
 using BlackjackPlugin.GameLogic;
-using BlackjackPlugin.Localization;
 using System.Collections.Generic;
 using static BlackjackPlugin.Localization.Localization;
 

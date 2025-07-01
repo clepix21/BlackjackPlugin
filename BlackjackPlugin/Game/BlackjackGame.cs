@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using BlackjackPlugin.Localization;
 using static BlackjackPlugin.Localization.Localization;
 
-#nullable enable
 
 namespace BlackjackPlugin.GameLogic;
 
