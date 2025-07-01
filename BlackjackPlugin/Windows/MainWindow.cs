@@ -1,6 +1,7 @@
 using System;
 using System.Numerics;
 using Dalamud.Interface.Windowing;
+using Dalamud.Interface.Utility.Raii;
 using ImGuiNET;
 using BlackjackPlugin.GameLogic;
 using BlackjackPlugin.Localization;
@@ -40,7 +41,7 @@ public class MainWindow : Window, IDisposable
         game.GameLanguage = plugin.Configuration.CurrentLanguage;
     }
 
-    // Désabonnement lors de la destruction de la fenêtre
+    // Désabonnement lors de la destruction
     public void Dispose()
     {
         game.OnGameEvent -= AddToLog;
@@ -103,16 +104,16 @@ public class MainWindow : Window, IDisposable
         }
     }
 
-    // Affiche l'en-tête avec l'argent du joueur et la sauvegarde courante
+    // Affiche l'en-tête avec l'argent du joueur, la sauvegarde et la mise
     private void DrawHeader()
     {
         var lang = plugin.Configuration.CurrentLanguage;
         var currentSave = plugin.Configuration.CurrentSave!;
         
         // Style du header (texte doré)
-        ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(1.0f, 0.84f, 0.0f, 1.0f)); // Or
+        using var textColor = ImRaii.PushColor(ImGuiCol.Text, new Vector4(1.0f, 0.84f, 0.0f, 1.0f));
         ImGui.Text($"{Get("money", lang)}: {currentSave.PlayerMoney} Gil");
-        ImGui.PopStyleColor();
+        textColor.Pop();
         
         ImGui.SameLine();
         ImGui.Text($"{Get("current_save", lang)}: {currentSave.Name}");
@@ -130,60 +131,64 @@ public class MainWindow : Window, IDisposable
         var lang = plugin.Configuration.CurrentLanguage;
         
         // Zone du croupier
-        ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.8f, 0.2f, 0.2f, 1.0f)); // Rouge
-        ImGui.Text(Get("dealer", lang));
-        ImGui.PopStyleColor();
-        
-        ImGui.Indent();
-        DrawHand(game.DealerHand, !game.DealerHoleCardRevealed);
-        
-        if (game.DealerHoleCardRevealed)
+        using (var dealerColor = ImRaii.PushColor(ImGuiCol.Text, new Vector4(0.8f, 0.2f, 0.2f, 1.0f))) // Rouge
         {
-            int dealerValue = game.GetHandValue(game.DealerHand);
-            ImGui.Text($"{Get("total", lang)}: {dealerValue}");
-            if (dealerValue > 21)
+            ImGui.Text(Get("dealer", lang));
+        }
+        
+        using (var indent = ImRaii.PushIndent())
+        {
+            DrawHand(game.DealerHand, !game.DealerHoleCardRevealed);
+            
+            if (game.DealerHoleCardRevealed)
             {
-                ImGui.SameLine();
-                ImGui.TextColored(new Vector4(1, 0, 0, 1), Get("bust", lang));
+                int dealerValue = game.GetHandValue(game.DealerHand);
+                ImGui.Text($"{Get("total", lang)}: {dealerValue}");
+                if (dealerValue > 21)
+                {
+                    ImGui.SameLine();
+                    ImGui.TextColored(new Vector4(1, 0, 0, 1), Get("bust", lang));
+                }
+            }
+            else if (game.DealerHand.Count > 0)
+            {
+                ImGui.Text($"{Get("total", lang)}: {game.DealerHand[0].GetBlackjackValue()} + ?");
             }
         }
-        else if (game.DealerHand.Count > 0)
-        {
-            ImGui.Text($"{Get("total", lang)}: {game.DealerHand[0].GetBlackjackValue()} + ?");
-        }
-        ImGui.Unindent();
         
         ImGui.Spacing();
         ImGui.Spacing();
 
         // Zone du joueur
-        ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0.2f, 0.8f, 0.2f, 1.0f)); // Vert
-        ImGui.Text(Get("your_hand", lang));
-        ImGui.PopStyleColor();
-        
-        ImGui.Indent();
-        DrawHand(game.PlayerHand, false);
-        
-        if (game.PlayerHand.Count > 0)
+        using (var playerColor = ImRaii.PushColor(ImGuiCol.Text, new Vector4(0.2f, 0.8f, 0.2f, 1.0f))) // Vert
         {
-            int playerValue = game.GetHandValue(game.PlayerHand);
-            ImGui.Text($"{Get("total", lang)}: {playerValue}");
+            ImGui.Text(Get("your_hand", lang));
+        }
+        
+        using (var indent = ImRaii.PushIndent())
+        {
+            DrawHand(game.PlayerHand, false);
             
-            if (playerValue > 21)
+            if (game.PlayerHand.Count > 0)
             {
-                ImGui.SameLine();
-                ImGui.TextColored(new Vector4(1, 0, 0, 1), Get("bust", lang));
-            }
-            else if (playerValue == 21 && game.PlayerHand.Count == 2)
-            {
-                ImGui.SameLine();
-                ImGui.TextColored(new Vector4(0, 1, 0, 1), Get("blackjack", lang));
+                int playerValue = game.GetHandValue(game.PlayerHand);
+                ImGui.Text($"{Get("total", lang)}: {playerValue}");
+                
+                if (playerValue > 21)
+                {
+                    ImGui.SameLine();
+                    ImGui.TextColored(new Vector4(1, 0, 0, 1), Get("bust", lang));
+                }
+                else if (playerValue == 21 && game.PlayerHand.Count == 2)
+                {
+                    ImGui.SameLine();
+                    ImGui.TextColored(new Vector4(0, 1, 0, 1), Get("blackjack", lang));
+                }
             }
         }
-        ImGui.Unindent();
     }
 
-    // Affiche une main de cartes (joueur ou croupier)
+    // Affiche une main de cartes (cachée ou non)
     private void DrawHand(List<Card> hand, bool hideSecondCard)
     {
         if (hand.Count == 0) return;
@@ -194,11 +199,10 @@ public class MainWindow : Window, IDisposable
             
             if (i == 1 && hideSecondCard)
             {
-                // Carte cachée (face down)
-                ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.3f, 0.3f, 0.3f, 1.0f));
-                ImGui.PushStyleColor(ImGuiCol.ButtonHovered, new Vector4(0.4f, 0.4f, 0.4f, 1.0f));
+                // Carte cachée (dos de carte)
+                using var hiddenCardStyle = ImRaii.PushColor(ImGuiCol.Button, new Vector4(0.3f, 0.3f, 0.3f, 1.0f))
+                    .Push(ImGuiCol.ButtonHovered, new Vector4(0.4f, 0.4f, 0.4f, 1.0f));
                 ImGui.Button("🂠");
-                ImGui.PopStyleColor(2);
             }
             else
             {
@@ -208,10 +212,9 @@ public class MainWindow : Window, IDisposable
                     ? new Vector4(0.8f, 0.2f, 0.2f, 1.0f) 
                     : new Vector4(0.2f, 0.2f, 0.2f, 1.0f);
                 
-                ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-                ImGui.PushStyleColor(ImGuiCol.Text, color);
+                using var cardStyle = ImRaii.PushColor(ImGuiCol.Button, new Vector4(1.0f, 1.0f, 1.0f, 1.0f))
+                    .Push(ImGuiCol.Text, color);
                 ImGui.Button($" {card.GetDisplayName()} ");
-                ImGui.PopStyleColor(2);
             }
         }
     }
@@ -265,18 +268,18 @@ public class MainWindow : Window, IDisposable
         
         ImGui.Spacing();
         
+        // Si le joueur n'a plus d'argent
         if (currentSave.PlayerMoney <= 0)
         {
-            // Message si le joueur n'a plus d'argent
             ImGui.TextColored(new Vector4(1, 0, 0, 1), Get("no_money", lang));
             if (ImGui.Button(Get("reset_money", lang)))
             {
                 plugin.Configuration.UpdatePlayerMoney(1000);
             }
         }
+        // Bouton pour distribuer les cartes
         else if (ImGui.Button(Get("deal_cards", lang)) && betAmount <= currentSave.PlayerMoney)
         {
-            // Démarrer une nouvelle partie
             game.StartNewGame(betAmount);
         }
     }
@@ -301,7 +304,7 @@ public class MainWindow : Window, IDisposable
             game.Stand();
         }
         
-        // Double Down si possible
+        // Bouton "Doubler" si possible
         if (game.CanDoubleDown() && currentSave.PlayerMoney >= game.CurrentBet)
         {
             ImGui.SameLine();
@@ -312,7 +315,7 @@ public class MainWindow : Window, IDisposable
         }
     }
 
-    // Contrôles et affichage après la fin de la partie
+    // Contrôles affichés à la fin de la partie
     private void DrawGameOverControls()
     {
         var lang = plugin.Configuration.CurrentLanguage;
@@ -340,7 +343,7 @@ public class MainWindow : Window, IDisposable
         
         int netResult = game.GetNetResult();
         
-        // Affichage du gain ou de la perte nette
+        // Affiche les gains ou pertes nets
         if (netResult > 0)
         {
             ImGui.TextColored(new Vector4(0, 1, 0, 1), Get("net_winnings", lang, netResult));
@@ -356,7 +359,7 @@ public class MainWindow : Window, IDisposable
         
         ImGui.Spacing();
         
-        // Bouton pour démarrer une nouvelle partie
+        // Bouton pour commencer une nouvelle partie
         if (ImGui.Button(Get("new_game", lang)))
         {
             // Appliquer le résultat financier de la partie
@@ -377,22 +380,22 @@ public class MainWindow : Window, IDisposable
         
         if (ImGui.CollapsingHeader(Get("game_history", lang)))
         {
-            ImGui.BeginChild("GameLog", new Vector2(0, 100), true);
-            
-            foreach (var entry in gameLog)
+            using var child = ImRaii.Child("GameLog", new Vector2(0, 100), true);
+            if (child)
             {
-                ImGui.TextWrapped(entry);
-            }
-            
-            // Auto-scroll vers le bas si déjà en bas
-            if (ImGui.GetScrollY() >= ImGui.GetScrollMaxY())
-                ImGui.SetScrollHereY(1.0f);
+                foreach (var entry in gameLog)
+                {
+                    ImGui.TextWrapped(entry);
+                }
                 
-            ImGui.EndChild();
+                // Auto-scroll vers le bas si besoin
+                if (ImGui.GetScrollY() >= ImGui.GetScrollMaxY())
+                    ImGui.SetScrollHereY(1.0f);
+            }
         }
     }
 
-    // Applique le résultat de la partie sur la sauvegarde (argent, stats)
+    // Applique le résultat de la partie à la sauvegarde (argent, stats)
     private void ApplyGameResult()
     {
         var currentSave = plugin.Configuration.CurrentSave!;

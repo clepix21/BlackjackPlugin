@@ -1,20 +1,21 @@
 using System;
 using System.Numerics;
 using Dalamud.Interface.Windowing;
+using Dalamud.Interface.Utility.Raii;
 using ImGuiNET;
 using BlackjackPlugin.Localization;
 using static BlackjackPlugin.Localization.Localization;
 
 namespace BlackjackPlugin.Windows;
 
-// Fenêtre de configuration principale du plugin Blackjack
+// Fenêtre de configuration principale du plugin
 public class ConfigWindow : Window, IDisposable
 {
     private Configuration configuration; // Référence à la configuration du plugin
-    private string[] newSaveNames = new string[3]; // Un nom par slot de sauvegarde
+    private string[] newSaveNames = new string[3]; // Champs pour les noms des nouvelles sauvegardes
     private Language lastLanguage; // Pour détecter les changements de langue
 
-    // Constructeur : initialise la fenêtre avec le titre localisé
+    // Constructeur : initialise la fenêtre et les champs
     public ConfigWindow(Plugin plugin) : base(
         Get("config_title", plugin.Configuration.CurrentLanguage))
     {
@@ -41,7 +42,7 @@ public class ConfigWindow : Window, IDisposable
     {
         var lang = configuration.CurrentLanguage;
         
-        // Met à jour le titre si la langue a changé et que la fenêtre n'est pas en focus
+        // Met à jour le titre si la langue a changé et que la fenêtre n'est pas active
         if (lastLanguage != lang && !ImGui.IsWindowFocused())
         {
             WindowName = Get("config_title", lang);
@@ -57,7 +58,7 @@ public class ConfigWindow : Window, IDisposable
         DrawLanguageSettings(); // Paramètres de langue
     }
 
-    // Affiche et gère les slots de sauvegarde
+    // Affiche et gère les emplacements de sauvegarde
     private void DrawSaveManagement()
     {
         var lang = configuration.CurrentLanguage;
@@ -65,28 +66,26 @@ public class ConfigWindow : Window, IDisposable
         ImGui.Text(Get("save_management", lang));
         ImGui.Separator();
         
-        // Affiche les 3 emplacements de sauvegarde
+        // Affiche les 3 slots de sauvegarde
         for (int i = 0; i < configuration.SaveSlots.Length; i++)
         {
             var slot = configuration.SaveSlots[i];
             var isCurrentSlot = configuration.CurrentSaveSlot == i;
             
-            ImGui.PushID(i);
+            using var id = ImRaii.PushId(i);
             
-            // Met en surbrillance le slot actuel
-            if (isCurrentSlot)
-            {
-                ImGui.PushStyleColor(ImGuiCol.ChildBg, new Vector4(0.2f, 0.4f, 0.2f, 0.3f));
-            }
+            // Met en surbrillance le slot sélectionné
+            using var bgColor = ImRaii.PushColor(ImGuiCol.ChildBg, new Vector4(0.2f, 0.4f, 0.2f, 0.3f), isCurrentSlot);
+            using var child = ImRaii.Child($"slot_{i}", new Vector2(0, 80), true);
             
-            ImGui.BeginChild($"slot_{i}", new Vector2(0, 80), true);
+            if (!child) continue;
             
             ImGui.Text($"{Get("slot", lang)} {i + 1}:");
             ImGui.SameLine();
             
             if (slot.IsEmpty)
             {
-                // Slot vide : permet de créer une nouvelle sauvegarde
+                // Si le slot est vide, propose la création d'une sauvegarde
                 ImGui.TextColored(new Vector4(0.6f, 0.6f, 0.6f, 1.0f), Get("empty", lang));
                 
                 ImGui.SetNextItemWidth(200);
@@ -95,21 +94,21 @@ public class ConfigWindow : Window, IDisposable
                 
                 if (ImGui.Button(Get("create_save", lang)))
                 {
-                    // Si aucun nom n'est fourni, utiliser un nom par défaut
+                    // Utilise un nom par défaut si aucun n'est fourni
                     string saveName = string.IsNullOrWhiteSpace(newSaveNames[i]) 
                         ? $"Slot {i + 1}" 
                         : newSaveNames[i].Trim();
                     
                     configuration.CreateSave(i, saveName);
-                    newSaveNames[i] = ""; // Vider le champ après création
+                    newSaveNames[i] = ""; // Réinitialise le champ après création
                 }
             }
             else
             {
-                // Slot existant : affiche les infos et les boutons d'action
+                // Affiche les infos de la sauvegarde existante
                 ImGui.Text($"{slot.Name}");
                 
-                // Affichage des statistiques
+                // Statistiques du joueur
                 string statsLine1 = $"{Get("money", lang)}: {slot.PlayerMoney} Gil";
                 string statsLine2 = "";
                 
@@ -131,7 +130,7 @@ public class ConfigWindow : Window, IDisposable
                 ImGui.Text($"{Get("created", lang)}: {slot.CreatedDate:dd/MM/yyyy} | " +
                           $"{Get("last_played", lang)}: {slot.LastPlayed:dd/MM/yyyy}");
                 
-                // Boutons pour charger, réinitialiser ou supprimer la sauvegarde
+                // Boutons d'action pour la sauvegarde
                 if (!isCurrentSlot && ImGui.Button(Get("load_save", lang)))
                 {
                     configuration.SelectSave(i);
@@ -152,19 +151,10 @@ public class ConfigWindow : Window, IDisposable
                     configuration.DeleteSave(i);
                 }
             }
-            
-            ImGui.EndChild();
-            
-            if (isCurrentSlot)
-            {
-                ImGui.PopStyleColor();
-            }
-            
-            ImGui.PopID();
         }
     }
 
-    // Affiche et gère les options de jeu (ex : mise par défaut)
+    // Affiche les options de jeu (ex : mise par défaut)
     private void DrawGameOptions()
     {
         var lang = configuration.CurrentLanguage;
@@ -175,12 +165,13 @@ public class ConfigWindow : Window, IDisposable
         var defaultBet = configuration.DefaultBet;
         if (ImGui.InputInt(Get("default_bet", lang), ref defaultBet))
         {
-            configuration.DefaultBet = Math.Max(10, defaultBet); // Mise minimale de 10
-            configuration.Save(); // Sauvegarde automatique
+            configuration.DefaultBet = Math.Max(10, defaultBet);
+            // Sauvegarde automatique lors du changement
+            configuration.Save();
         }
     }
 
-    // Affiche et gère le choix de la langue
+    // Affiche les paramètres de langue
     private void DrawLanguageSettings()
     {
         var lang = configuration.CurrentLanguage;
@@ -192,7 +183,8 @@ public class ConfigWindow : Window, IDisposable
         if (ImGui.Checkbox(Get("use_french", lang), ref useFrench))
         {
             configuration.CurrentLanguage = useFrench ? Language.French : Language.English;
-            configuration.Save(); // Sauvegarde automatique
+            // Sauvegarde automatique lors du changement de langue
+            configuration.Save();
             // Ne pas mettre à jour lastLanguage ici pour éviter le changement de titre immédiat
         }
     }
