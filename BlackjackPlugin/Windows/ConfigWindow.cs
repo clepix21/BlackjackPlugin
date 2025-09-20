@@ -22,7 +22,7 @@ public class ConfigWindow : Window, IDisposable
         Flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
                 ImGuiWindowFlags.NoScrollWithMouse;
 
-        Size = new Vector2(450, 425);
+        Size = new Vector2(450, 400);
         SizeCondition = ImGuiCond.Always;
 
         configuration = plugin.Configuration;
