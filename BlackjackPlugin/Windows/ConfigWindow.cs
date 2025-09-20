@@ -3,6 +3,7 @@ using System.Numerics;
 using Dalamud.Interface.Windowing;
 using Dalamud.Interface.Utility.Raii;
 using ImGuiNET;
+using DImGui = Dalamud.Bindings.ImGui;
 using BlackjackPlugin.Localization;
 using static BlackjackPlugin.Localization.Localization;
 
@@ -19,11 +20,11 @@ public class ConfigWindow : Window, IDisposable
     public ConfigWindow(Plugin plugin) : base(
         Get("config_title", plugin.Configuration.CurrentLanguage))
     {
-        Flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
-                ImGuiWindowFlags.NoScrollWithMouse;
+    Flags = DImGui.ImGuiWindowFlags.NoResize | DImGui.ImGuiWindowFlags.NoCollapse | DImGui.ImGuiWindowFlags.NoScrollbar |
+        DImGui.ImGuiWindowFlags.NoScrollWithMouse;
 
-        Size = new Vector2(450, 400);
-        SizeCondition = ImGuiCond.Always;
+    Size = new Vector2(450, 400);
+    SizeCondition = DImGui.ImGuiCond.Always;
 
         configuration = plugin.Configuration;
         lastLanguage = configuration.CurrentLanguage;
@@ -75,7 +76,8 @@ public class ConfigWindow : Window, IDisposable
             using var id = ImRaii.PushId(i);
             
             // Met en surbrillance le slot sélectionné
-            using var bgColor = ImRaii.PushColor(ImGuiCol.ChildBg, new Vector4(0.2f, 0.4f, 0.2f, 0.3f), isCurrentSlot);
+            var colBg = DImGui.ImGui.GetColorU32(new Vector4(0.2f, 0.4f, 0.2f, 0.3f));
+            using var bgColor = ImRaii.PushColor(DImGui.ImGuiCol.ChildBg, colBg, isCurrentSlot);
             using var child = ImRaii.Child($"slot_{i}", new Vector2(0, 80), true);
             
             if (!child) continue;
