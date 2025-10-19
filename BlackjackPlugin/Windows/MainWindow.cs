@@ -2,8 +2,8 @@ using System;
 using System.Numerics;
 using Dalamud.Interface.Windowing;
 using Dalamud.Interface.Utility.Raii;
-using ImGuiNET;
 using DImGui = Dalamud.Bindings.ImGui;
+using ImGui = Dalamud.Bindings.ImGui.ImGui;
 using BlackjackPlugin.GameLogic;
 using System.Collections.Generic;
 using static BlackjackPlugin.Localization.Localization;
@@ -116,11 +116,10 @@ public class MainWindow : Window, IDisposable
             ? currentSave.PlayerMoney 
             : moneyBeforeGame - game.CurrentBet;
         
-    // Style du header
-    var colOr = DImGui.ImGui.GetColorU32(new Vector4(1.0f, 0.84f, 0.0f, 1.0f));
-    using var textColor = ImRaii.PushColor(DImGui.ImGuiCol.Text, colOr); // Or
-    ImGui.Text($"{Get("money", lang)}: {availableMoney} Gil");
-    textColor.Pop();
+        // Style du header
+        DImGui.ImGui.PushStyleColor(DImGui.ImGuiCol.Text, new Vector4(1.0f, 0.84f, 0.0f, 1.0f)); // Or
+        ImGui.Text($"{Get("money", lang)}: {availableMoney} Gil");
+        DImGui.ImGui.PopStyleColor();
         
         ImGui.SameLine();
         ImGui.Text($"{Get("current_save", lang)}: {currentSave.Name}");
@@ -138,11 +137,9 @@ public class MainWindow : Window, IDisposable
         var lang = plugin.Configuration.CurrentLanguage;
         
         // Zone du croupier
-        var colDealer = DImGui.ImGui.GetColorU32(new Vector4(0.8f, 0.2f, 0.2f, 1.0f));
-        using (var dealerColor = ImRaii.PushColor(DImGui.ImGuiCol.Text, colDealer)) // Rouge
-        {
-            ImGui.Text(Get("dealer", lang));
-        }
+        DImGui.ImGui.PushStyleColor(DImGui.ImGuiCol.Text, new Vector4(0.8f, 0.2f, 0.2f, 1.0f)); // Rouge
+        ImGui.Text(Get("dealer", lang));
+        DImGui.ImGui.PopStyleColor();
         
         using (var indent = ImRaii.PushIndent())
         {
@@ -168,11 +165,9 @@ public class MainWindow : Window, IDisposable
         ImGui.Spacing();
 
         // Zone du joueur
-        var colPlayer = DImGui.ImGui.GetColorU32(new Vector4(0.2f, 0.8f, 0.2f, 1.0f));
-        using (var playerColor = ImRaii.PushColor(DImGui.ImGuiCol.Text, colPlayer)) // Vert
-        {
-            ImGui.Text(Get("your_hand", lang));
-        }
+        DImGui.ImGui.PushStyleColor(DImGui.ImGuiCol.Text, new Vector4(0.2f, 0.8f, 0.2f, 1.0f)); // Vert
+        ImGui.Text(Get("your_hand", lang));
+        DImGui.ImGui.PopStyleColor();
         
         using (var indent = ImRaii.PushIndent())
         {
@@ -209,11 +204,10 @@ public class MainWindow : Window, IDisposable
             if (i == 1 && hideSecondCard)
             {
                 // Carte cachée
-                var colHidden = DImGui.ImGui.GetColorU32(new Vector4(0.3f, 0.3f, 0.3f, 1.0f));
-                var colHiddenHover = DImGui.ImGui.GetColorU32(new Vector4(0.4f, 0.4f, 0.4f, 1.0f));
-                using var hiddenCardStyle = ImRaii.PushColor(DImGui.ImGuiCol.Button, colHidden)
-                    .Push(DImGui.ImGuiCol.ButtonHovered, colHiddenHover);
+                DImGui.ImGui.PushStyleColor(DImGui.ImGuiCol.Button, new Vector4(0.3f, 0.3f, 0.3f, 1.0f));
+                DImGui.ImGui.PushStyleColor(DImGui.ImGuiCol.ButtonHovered, new Vector4(0.4f, 0.4f, 0.4f, 1.0f));
                 ImGui.Button("🂠");
+                DImGui.ImGui.PopStyleColor(2);
             }
             else
             {
@@ -223,11 +217,10 @@ public class MainWindow : Window, IDisposable
                     ? new Vector4(0.8f, 0.2f, 0.2f, 1.0f) 
                     : new Vector4(0.2f, 0.2f, 0.2f, 1.0f);
                 
-                var colButton = DImGui.ImGui.GetColorU32(new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-                var colText = DImGui.ImGui.GetColorU32(color);
-                using var cardStyle = ImRaii.PushColor(DImGui.ImGuiCol.Button, colButton)
-                    .Push(DImGui.ImGuiCol.Text, colText);
+                DImGui.ImGui.PushStyleColor(DImGui.ImGuiCol.Button, new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+                DImGui.ImGui.PushStyleColor(DImGui.ImGuiCol.Text, color);
                 ImGui.Button($" {card.GetDisplayName()} ");
+                DImGui.ImGui.PopStyleColor(2);
             }
         }
     }

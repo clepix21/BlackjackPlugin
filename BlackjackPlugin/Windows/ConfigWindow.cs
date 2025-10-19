@@ -1,9 +1,8 @@
 using System;
 using System.Numerics;
 using Dalamud.Interface.Windowing;
-using Dalamud.Interface.Utility.Raii;
-using ImGuiNET;
 using DImGui = Dalamud.Bindings.ImGui;
+using ImGui = Dalamud.Bindings.ImGui.ImGui;
 using BlackjackPlugin.Localization;
 using static BlackjackPlugin.Localization.Localization;
 
@@ -20,11 +19,11 @@ public class ConfigWindow : Window, IDisposable
     public ConfigWindow(Plugin plugin) : base(
         Get("config_title", plugin.Configuration.CurrentLanguage))
     {
-    Flags = DImGui.ImGuiWindowFlags.NoResize | DImGui.ImGuiWindowFlags.NoCollapse | DImGui.ImGuiWindowFlags.NoScrollbar |
-        DImGui.ImGuiWindowFlags.NoScrollWithMouse;
-
-    Size = new Vector2(450, 400);
-    SizeCondition = DImGui.ImGuiCond.Always;
+        SizeConstraints = new WindowSizeConstraints
+        {
+            MinimumSize = new Vector2(450, 400),
+            MaximumSize = new Vector2(450, 400)
+        };
 
         configuration = plugin.Configuration;
         lastLanguage = configuration.CurrentLanguage;
@@ -73,86 +72,94 @@ public class ConfigWindow : Window, IDisposable
             var slot = configuration.SaveSlots[i];
             var isCurrentSlot = configuration.CurrentSaveSlot == i;
             
-            using var id = ImRaii.PushId(i);
+            ImGui.PushID(i);
             
             // Met en surbrillance le slot sélectionné
-            var colBg = DImGui.ImGui.GetColorU32(new Vector4(0.2f, 0.4f, 0.2f, 0.3f));
-            using var bgColor = ImRaii.PushColor(DImGui.ImGuiCol.ChildBg, colBg, isCurrentSlot);
-            using var child = ImRaii.Child($"slot_{i}", new Vector2(0, 80), true);
+            if (isCurrentSlot)
+                DImGui.ImGui.PushStyleColor(DImGui.ImGuiCol.ChildBg, new Vector4(0.2f, 0.4f, 0.2f, 0.3f));
             
-            if (!child) continue;
-            
-            ImGui.Text($"{Get("slot", lang)} {i + 1}:");
-            ImGui.SameLine();
-            
-            if (slot.IsEmpty)
+            if (ImGui.BeginChild($"slot_{i}", new Vector2(0, 80), true))
             {
-                // Si le slot est vide, propose la création d'une sauvegarde
-                ImGui.TextColored(new Vector4(0.6f, 0.6f, 0.6f, 1.0f), Get("empty", lang));
-                
-                ImGui.SetNextItemWidth(200);
-                ImGui.InputText($"##name_{i}", ref newSaveNames[i], 50);
+            
+                ImGui.Text($"{Get("slot", lang)} {i + 1}:");
                 ImGui.SameLine();
-                
-                if (ImGui.Button(Get("create_save", lang)))
+            
+                if (slot.IsEmpty)
                 {
-                    // Utilise un nom par défaut si aucun n'est fourni
-                    string saveName = string.IsNullOrWhiteSpace(newSaveNames[i]) 
-                        ? $"Slot {i + 1}" 
-                        : newSaveNames[i].Trim();
+                    // Si le slot est vide, propose la création d'une sauvegarde
+                    ImGui.TextColored(new Vector4(0.6f, 0.6f, 0.6f, 1.0f), Get("empty", lang));
+                
+                    ImGui.SetNextItemWidth(200);
+                    ImGui.InputText($"##name_{i}", ref newSaveNames[i], 50);
+                    ImGui.SameLine();
+                
+                    if (ImGui.Button(Get("create_save", lang)))
+                    {
+                        // Utilise un nom par défaut si aucun n'est fourni
+                        string saveName = string.IsNullOrWhiteSpace(newSaveNames[i]) 
+                            ? $"Slot {i + 1}" 
+                            : newSaveNames[i].Trim();
                     
-                    configuration.CreateSave(i, saveName);
-                    newSaveNames[i] = ""; // Réinitialise le champ après création
-                }
-            }
-            else
-            {
-                // Affiche les infos de la sauvegarde existante
-                ImGui.Text($"{slot.Name}");
-                
-                // Statistiques du joueur
-                string statsLine1 = $"{Get("money", lang)}: {slot.PlayerMoney} Gil";
-                string statsLine2 = "";
-                
-                if (slot.GamesPlayed > 0)
-                {
-                    double winRate = (double)slot.GamesWon / slot.GamesPlayed * 100.0;
-                    statsLine2 = $"{Get("games_played", lang)}: {slot.GamesPlayed} | " +
-                                $"{Get("win_rate", lang)}: {winRate:F1}% | " +
-                                $"{Get("blackjacks", lang)}: {slot.BlackjacksHit}";
+                        configuration.CreateSave(i, saveName);
+                        newSaveNames[i] = ""; // Réinitialise le champ après création
+                    }
                 }
                 else
                 {
-                    statsLine2 = $"{Get("games_played", lang)}: 0 | {Get("win_rate", lang)}: 0.0%";
+                    // Affiche les infos de la sauvegarde existante
+                    ImGui.Text($"{slot.Name}");
+                
+                    // Statistiques du joueur
+                    string statsLine1 = $"{Get("money", lang)}: {slot.PlayerMoney} Gil";
+                    string statsLine2 = "";
+                
+                    if (slot.GamesPlayed > 0)
+                    {
+                        double winRate = (double)slot.GamesWon / slot.GamesPlayed * 100.0;
+                        statsLine2 = $"{Get("games_played", lang)}: {slot.GamesPlayed} | " +
+                                    $"{Get("win_rate", lang)}: {winRate:F1}% | " +
+                                    $"{Get("blackjacks", lang)}: {slot.BlackjacksHit}";
+                    }
+                    else
+                    {
+                        statsLine2 = $"{Get("games_played", lang)}: 0 | {Get("win_rate", lang)}: 0.0%";
+                    }
+                
+                    ImGui.Text(statsLine1);
+                    ImGui.Text(statsLine2);
+                
+                    ImGui.Text($"{Get("created", lang)}: {slot.CreatedDate:dd/MM/yyyy} | " +
+                              $"{Get("last_played", lang)}: {slot.LastPlayed:dd/MM/yyyy}");
+                
+                    // Boutons d'action pour la sauvegarde
+                    if (!isCurrentSlot && ImGui.Button(Get("load_save", lang)))
+                    {
+                        configuration.SelectSave(i);
+                    }
+                
+                    if (!isCurrentSlot) ImGui.SameLine();
+                
+                    if (ImGui.Button(Get("reset_save", lang)))
+                    {
+                        slot.Reset();
+                        configuration.Save();
+                    }
+                
+                    ImGui.SameLine();
+                
+                    if (ImGui.Button(Get("delete_save", lang)))
+                    {
+                        configuration.DeleteSave(i);
+                    }
                 }
                 
-                ImGui.Text(statsLine1);
-                ImGui.Text(statsLine2);
-                
-                ImGui.Text($"{Get("created", lang)}: {slot.CreatedDate:dd/MM/yyyy} | " +
-                          $"{Get("last_played", lang)}: {slot.LastPlayed:dd/MM/yyyy}");
-                
-                // Boutons d'action pour la sauvegarde
-                if (!isCurrentSlot && ImGui.Button(Get("load_save", lang)))
-                {
-                    configuration.SelectSave(i);
-                }
-                
-                if (!isCurrentSlot) ImGui.SameLine();
-                
-                if (ImGui.Button(Get("reset_save", lang)))
-                {
-                    slot.Reset();
-                    configuration.Save();
-                }
-                
-                ImGui.SameLine();
-                
-                if (ImGui.Button(Get("delete_save", lang)))
-                {
-                    configuration.DeleteSave(i);
-                }
+                ImGui.EndChild();
             }
+            
+            if (isCurrentSlot)
+                DImGui.ImGui.PopStyleColor();
+                
+            ImGui.PopID();
         }
     }
 
