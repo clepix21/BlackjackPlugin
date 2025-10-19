@@ -3,8 +3,6 @@ using Dalamud.Plugin;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Services;
 using BlackjackPlugin.Windows;
-using BlackjackPlugin.Localization;
-using System;
 using static BlackjackPlugin.Localization.Localization;
 
 namespace BlackjackPlugin;
@@ -14,7 +12,6 @@ namespace BlackjackPlugin;
 /// </summary>
 public sealed class Plugin : IDalamudPlugin
 {
-    /// <inheritdoc/>
     public string Name => "Blackjack Casino";
     
     private const string CommandName = "/blackjack";
