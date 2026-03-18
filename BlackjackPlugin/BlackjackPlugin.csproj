@@ -13,9 +13,5 @@
       <Visible>false</Visible>
     </Content>
   </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Update="DalamudPackager" Version="14.0.2" />
-  </ItemGroup>
   
 </Project>

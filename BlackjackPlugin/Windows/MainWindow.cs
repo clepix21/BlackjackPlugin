@@ -2,7 +2,8 @@ using System;
 using System.Numerics;
 using Dalamud.Interface.Windowing;
 using Dalamud.Interface.Utility.Raii;
-using ImGuiNET;
+using DImGui = Dalamud.Bindings.ImGui;
+using ImGui = Dalamud.Bindings.ImGui.ImGui;
 using BlackjackPlugin.GameLogic;
 using System.Collections.Generic;
 using static BlackjackPlugin.Localization.Localization;
@@ -116,9 +117,9 @@ public class MainWindow : Window, IDisposable
             : moneyBeforeGame - game.CurrentBet;
         
         // Style du header
-        using var textColor = ImRaii.PushColor(ImGuiCol.Text, new Vector4(1.0f, 0.84f, 0.0f, 1.0f)); // Or
+        DImGui.ImGui.PushStyleColor(DImGui.ImGuiCol.Text, new Vector4(1.0f, 0.84f, 0.0f, 1.0f)); // Or
         ImGui.Text($"{Get("money", lang)}: {availableMoney} Gil");
-        textColor.Pop();
+        DImGui.ImGui.PopStyleColor();
         
         ImGui.SameLine();
         ImGui.Text($"{Get("current_save", lang)}: {currentSave.Name}");
@@ -136,10 +137,9 @@ public class MainWindow : Window, IDisposable
         var lang = plugin.Configuration.CurrentLanguage;
         
         // Zone du croupier
-        using (var dealerColor = ImRaii.PushColor(ImGuiCol.Text, new Vector4(0.8f, 0.2f, 0.2f, 1.0f))) // Rouge
-        {
-            ImGui.Text(Get("dealer", lang));
-        }
+        DImGui.ImGui.PushStyleColor(DImGui.ImGuiCol.Text, new Vector4(0.8f, 0.2f, 0.2f, 1.0f)); // Rouge
+        ImGui.Text(Get("dealer", lang));
+        DImGui.ImGui.PopStyleColor();
         
         using (var indent = ImRaii.PushIndent())
         {
@@ -165,10 +165,9 @@ public class MainWindow : Window, IDisposable
         ImGui.Spacing();
 
         // Zone du joueur
-        using (var playerColor = ImRaii.PushColor(ImGuiCol.Text, new Vector4(0.2f, 0.8f, 0.2f, 1.0f))) // Vert
-        {
-            ImGui.Text(Get("your_hand", lang));
-        }
+        DImGui.ImGui.PushStyleColor(DImGui.ImGuiCol.Text, new Vector4(0.2f, 0.8f, 0.2f, 1.0f)); // Vert
+        ImGui.Text(Get("your_hand", lang));
+        DImGui.ImGui.PopStyleColor();
         
         using (var indent = ImRaii.PushIndent())
         {
@@ -205,9 +204,10 @@ public class MainWindow : Window, IDisposable
             if (i == 1 && hideSecondCard)
             {
                 // Carte cachée
-                using var hiddenCardStyle = ImRaii.PushColor(ImGuiCol.Button, new Vector4(0.3f, 0.3f, 0.3f, 1.0f))
-                    .Push(ImGuiCol.ButtonHovered, new Vector4(0.4f, 0.4f, 0.4f, 1.0f));
+                DImGui.ImGui.PushStyleColor(DImGui.ImGuiCol.Button, new Vector4(0.3f, 0.3f, 0.3f, 1.0f));
+                DImGui.ImGui.PushStyleColor(DImGui.ImGuiCol.ButtonHovered, new Vector4(0.4f, 0.4f, 0.4f, 1.0f));
                 ImGui.Button("🂠");
+                DImGui.ImGui.PopStyleColor(2);
             }
             else
             {
@@ -217,9 +217,10 @@ public class MainWindow : Window, IDisposable
                     ? new Vector4(0.8f, 0.2f, 0.2f, 1.0f) 
                     : new Vector4(0.2f, 0.2f, 0.2f, 1.0f);
                 
-                using var cardStyle = ImRaii.PushColor(ImGuiCol.Button, new Vector4(1.0f, 1.0f, 1.0f, 1.0f))
-                    .Push(ImGuiCol.Text, color);
+                DImGui.ImGui.PushStyleColor(DImGui.ImGuiCol.Button, new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+                DImGui.ImGui.PushStyleColor(DImGui.ImGuiCol.Text, color);
                 ImGui.Button($" {card.GetDisplayName()} ");
+                DImGui.ImGui.PopStyleColor(2);
             }
         }
     }

@@ -8,7 +8,7 @@
   "ApplicableVersion": "any",
   "Tags": ["game", "casino", "blackjack", "cards", "gambling", "entertainment", "minigame"],
   "CategoryTags": ["other"],
-  "DalamudApiLevel": 12,
+  "DalamudApiLevel": 13,
   "LoadRequiredState": 0,
   "LoadSync": false,
   "CanUnloadAsync": true,
