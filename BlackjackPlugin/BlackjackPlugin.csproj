@@ -1,6 +1,6 @@
 <Project Sdk="Dalamud.NET.Sdk/14.0.2">
   <PropertyGroup>
-    <Version>1.0.0.0</Version>
+    <Version>1.0.0.1</Version>
     <Description>A plugin to play blackjack just like in a real casino.\nEnjoy an authentic casino experience directly in Final Fantasy XIV.</Description>
     <PackageProjectUrl>https://github.com/clepix21/BlackjackPlugin </PackageProjectUrl>
     <PackageLicenseExpression></PackageLicenseExpression>
