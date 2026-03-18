@@ -16,7 +16,7 @@ public class MainWindow : Window, IDisposable
     private Plugin plugin; // Référence au plugin principal
     private BlackjackGame game; // Instance du jeu de blackjack
     private int betAmount = 50; // Montant de la mise actuelle
-    private List<string> gameLog; // Historique des événements du jeu
+    private Queue<string> gameLog; // Historique des événements du jeu
     private const int MaxLogEntries = 10; // Nombre max d'entrées dans le log
     private int moneyBeforeGame = 0; // Argent avant le début de la partie
 
@@ -33,7 +33,7 @@ public class MainWindow : Window, IDisposable
         this.plugin = plugin;
         this.game = new BlackjackGame();
         this.betAmount = plugin.Configuration.DefaultBet;
-        this.gameLog = new List<string>();
+        this.gameLog = new Queue<string>();
 
         // S'abonner aux événements du jeu pour le log
         game.OnGameEvent += AddToLog;
@@ -51,10 +51,10 @@ public class MainWindow : Window, IDisposable
     // Ajoute un message à l'historique du jeu
     private void AddToLog(string message)
     {
-        gameLog.Add($"[{DateTime.Now:HH:mm:ss}] {message}");
+        gameLog.Enqueue($"[{DateTime.Now:HH:mm:ss}] {message}");
         if (gameLog.Count > MaxLogEntries)
         {
-            gameLog.RemoveAt(0);
+            gameLog.Dequeue();
         }
     }
 
@@ -157,7 +157,7 @@ public class MainWindow : Window, IDisposable
             }
             else if (game.DealerHand.Count > 0)
             {
-                ImGui.Text($"{Get("total", lang)}: {game.DealerHand[0].GetBlackjackValue()} + ?");
+                ImGui.Text($"{Get("total", lang)}: {game.DealerHand[0].BlackjackValue} + ?");
             }
         }
         
@@ -219,7 +219,7 @@ public class MainWindow : Window, IDisposable
                 
                 DImGui.ImGui.PushStyleColor(DImGui.ImGuiCol.Button, new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
                 DImGui.ImGui.PushStyleColor(DImGui.ImGuiCol.Text, color);
-                ImGui.Button($" {card.GetDisplayName()} ");
+                ImGui.Button(card.ButtonText);
                 DImGui.ImGui.PopStyleColor(2);
             }
         }

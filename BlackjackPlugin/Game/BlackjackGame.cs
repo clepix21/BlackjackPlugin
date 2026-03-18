@@ -98,7 +98,7 @@ public class BlackjackGame
 
         var card = deck.DrawCard();
         PlayerHand.Add(card);
-        OnGameEvent?.Invoke(Get("card_drawn", GameLanguage, card.GetDisplayName()));
+        OnGameEvent?.Invoke(Get("card_drawn", GameLanguage, card.DisplayName));
         
         // Si le joueur dépasse 21, il perd
         if (GetHandValue(PlayerHand) > 21)
@@ -129,7 +129,7 @@ public class BlackjackGame
         {
             var card = deck.DrawCard();
             DealerHand.Add(card);
-            OnGameEvent?.Invoke(Get("dealer_draws", GameLanguage, card.GetDisplayName()));
+            OnGameEvent?.Invoke(Get("dealer_draws", GameLanguage, card.DisplayName));
         }
 
         int playerValue = GetHandValue(PlayerHand);
@@ -168,14 +168,10 @@ public class BlackjackGame
 
         foreach (var card in hand)
         {
+            value += card.BlackjackValue;
             if (card.Rank == Rank.Ace)
             {
                 aces++;
-                value += 11;
-            }
-            else
-            {
-                value += card.GetBlackjackValue();
             }
         }
 
@@ -194,7 +190,7 @@ public class BlackjackGame
     {
         return Result switch
         {
-            GameResult.PlayerBlackjack => CurrentBet + (int)(CurrentBet * 1.5f), // Blackjack paie 3:2
+            GameResult.PlayerBlackjack => CurrentBet + (CurrentBet * 3 / 2), // Blackjack paie 3:2
             GameResult.PlayerWin or GameResult.DealerBust => CurrentBet * 2,      // Gain égal à la mise
             GameResult.Push => CurrentBet,                                        // Mise rendue
             GameResult.DealerWin or GameResult.PlayerBust => 0,                   // Perte totale

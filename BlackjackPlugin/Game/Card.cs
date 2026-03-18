@@ -30,33 +30,28 @@ public enum Rank
 // Classe représentant une carte à jouer
 public class Card
 {
-    // Propriété pour la couleur de la carte
     public Suit Suit { get; }
-    // Propriété pour la valeur de la carte
     public Rank Rank { get; }
+    
+    // Valeurs mises en cache pour éviter les allocations à chaque frame (60 fps)
+    public string DisplayName { get; }
+    public string ButtonText { get; }
+    public uint CardColor { get; }
+    public int BlackjackValue { get; }
 
-    // Constructeur de la carte
     public Card(Suit suit, Rank rank)
     {
         Suit = suit;
         Rank = rank;
-    }
-
-    // Retourne la valeur de la carte pour le Blackjack
-    public int GetBlackjackValue()
-    {
-        return Rank switch
+        
+        BlackjackValue = rank switch
         {
-            Rank.Ace => 11, // L'as vaut 11 (sera ajusté si nécessaire)
-            Rank.Jack or Rank.Queen or Rank.King => 10, // Figures valent 10
-            _ => (int)Rank // Les autres gardent leur valeur numérique
+            Rank.Ace => 11,
+            Rank.Jack or Rank.Queen or Rank.King => 10,
+            _ => (int)rank
         };
-    }
 
-    // Retourne le nom affiché de la carte (ex: "A♥", "10♠")
-    public string GetDisplayName()
-    {
-        var suitSymbol = Suit switch
+        var suitSymbol = suit switch
         {
             Suit.Hearts => "♥",
             Suit.Diamonds => "♦",
@@ -65,26 +60,27 @@ public class Card
             _ => ""
         };
 
-        var rankName = Rank switch
+        var rankName = rank switch
         {
             Rank.Ace => "A",
             Rank.Jack => "J",
             Rank.Queen => "Q",
             Rank.King => "K",
-            _ => ((int)Rank).ToString()
+            _ => ((int)rank).ToString()
         };
 
-        return $"{rankName}{suitSymbol}";
-    }
+        DisplayName = $"{rankName}{suitSymbol}";
+        ButtonText = $" {DisplayName} ";
 
-    // Retourne la couleur de la carte sous forme de code couleur (uint)
-    public uint GetCardColor()
-    {
-        return Suit switch
+        CardColor = suit switch
         {
-            Suit.Hearts or Suit.Diamonds => 0xFF0000FF, // Rouge
-            Suit.Clubs or Suit.Spades => 0x000000FF,   // Noir
+            Suit.Hearts or Suit.Diamonds => 0xFF0000FF,
+            Suit.Clubs or Suit.Spades => 0x000000FF,
             _ => 0xFFFFFFFF
         };
     }
+
+    public int GetBlackjackValue() => BlackjackValue;
+    public string GetDisplayName() => DisplayName;
+    public uint GetCardColor() => CardColor;
 }

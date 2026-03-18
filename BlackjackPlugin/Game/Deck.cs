@@ -8,10 +8,12 @@ namespace BlackjackPlugin.GameLogic;
 /// </summary>
 public class Deck
 {
-    // Liste des cartes dans le paquet
-    private List<Card> cards = new();
-    // Générateur de nombres aléatoires pour le mélange
-    private Random random = new();
+    // Tableau statique des cartes
+    private readonly Card[] cards = new Card[52];
+    // Générateur de nombres aléatoires
+    private readonly Random random = new();
+    // Index de la prochaine carte à piocher
+    private int currentIndex = 0;
 
     /// <summary>
     /// Initialise un nouveau paquet mélangé.
@@ -27,13 +29,12 @@ public class Deck
     /// </summary>
     private void InitializeDeck()
     {
-        cards.Clear();
-
+        int i = 0;
         foreach (Suit suit in Enum.GetValues<Suit>())
         {
             foreach (Rank rank in Enum.GetValues<Rank>())
             {
-                cards.Add(new Card(suit, rank));
+                cards[i++] = new Card(suit, rank);
             }
         }
     }
@@ -43,32 +44,30 @@ public class Deck
     /// </summary>
     public void Shuffle()
     {
-        for (int i = cards.Count - 1; i > 0; i--)
+        for (int i = cards.Length - 1; i > 0; i--)
         {
             int j = random.Next(i + 1);
             (cards[i], cards[j]) = (cards[j], cards[i]);
         }
+        currentIndex = 0;
     }
 
     /// <summary>
-    /// Pioche la première carte du paquet. Si le paquet est vide, il est réinitialisé et mélangé.
+    /// Pioche la première carte du paquet. Si le paquet est vide, il est remélangé.
     /// </summary>
     /// <returns>La carte piochée.</returns>
     public Card DrawCard()
     {
-        if (cards.Count == 0)
+        if (currentIndex >= cards.Length)
         {
-            InitializeDeck();
             Shuffle();
         }
 
-        var card = cards[0];
-        cards.RemoveAt(0);
-        return card;
+        return cards[currentIndex++];
     }
 
     /// <summary>
     /// Nombre de cartes restantes dans le paquet.
     /// </summary>
-    public int CardsRemaining => cards.Count;
+    public int CardsRemaining => cards.Length - currentIndex;
 }
