@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🎰 Blackjack Casino
+# Blackjack Casino
 
 [![GitHub release](https://img.shields.io/github/v/release/clepix21/BlackjackPlugin?style=for-the-badge)](https://github.com/clepix21/BlackjackPlugin/releases)
 [![.NET 9.0](https://img.shields.io/badge/.NET-9.0-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
